@@ -14,8 +14,21 @@ def list_conversations(db: Session = Depends(get_db)):
     """
     Retourne la liste des conversations (mock pour le MVP, sans current_user)
     """
+    from app.models.user import User
+    
     conversations = db.query(Conversation).all()
-    return conversations
+    result = []
+    for c in conversations:
+        talent = db.query(User).filter(User.id == c.subject_talent_id).first()
+        result.append({
+            "id": str(c.id),
+            "status": c.status,
+            "recruitment_stage": c.recruitment_stage,
+            "risk_score": c.risk_score,
+            "talent": {"id": str(talent.id), "name": f"{talent.email}"} if talent else None,
+            "created_at": c.created_at
+        })
+    return result
 
 @router.get("/{conversation_id}/messages")
 def list_messages(conversation_id: UUID, db: Session = Depends(get_db)):

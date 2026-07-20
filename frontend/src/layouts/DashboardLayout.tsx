@@ -6,6 +6,7 @@ const getNavLinks = (role: string | undefined) => {
   const links = [
     { to: '/feed', label: 'Explorer', icon: '📱' },
     { to: 'overview', label: 'Vue d\'ensemble', icon: '🏠' },
+    { to: 'inbox', label: 'Messagerie', icon: '💬' },
     { to: 'profile', label: 'Mon profil', icon: '👤' },
   ];
   if (role === 'TALENT_MINOR' || role === 'TALENT_MAJOR') {

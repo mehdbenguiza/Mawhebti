@@ -11,6 +11,7 @@ import { RecruiterDashboard } from './pages/dashboard/RecruiterDashboard';
 import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { FeedPage } from './pages/feed/FeedPage';
+import { InboxPage } from './pages/dashboard/InboxPage';
 import { useAuthStore } from './store/authStore';
 
 const queryClient = new QueryClient({
@@ -65,6 +66,7 @@ function App() {
             <Route path="overview" element={<TalentDashboard />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="upload" element={<UploadVideoPage />} />
+            <Route path="inbox" element={<InboxPage />} />
           </Route>
 
           {/* Dashboard Recruteur */}
@@ -81,6 +83,7 @@ function App() {
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<RecruiterDashboard />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="inbox" element={<InboxPage />} />
           </Route>
 
           {/* Dashboard Parent */}
@@ -97,6 +100,7 @@ function App() {
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<ParentDashboard />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="inbox" element={<InboxPage />} />
           </Route>
 
           {/* Dashboard Root Redirection */}

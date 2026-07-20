@@ -35,3 +35,27 @@ def accept_recruitment_request(request_id: UUID, db: Session = Depends(get_db)):
         return {"conversation_id": str(conv.id), "message": "Demande acceptée, conversation créée."}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/requests")
+def get_recruitment_requests(db: Session = Depends(get_db)):
+    """
+    Retourne la liste des demandes de contact (mock MVP: retourne toutes les demandes)
+    """
+    from app.models.recruitment import RecruitmentRequest
+    from app.models.user import User
+    
+    requests = db.query(RecruitmentRequest).all()
+    # Serialize manually for MVP
+    result = []
+    for r in requests:
+        recruiter = db.query(User).filter(User.id == r.recruiter_id).first()
+        talent = db.query(User).filter(User.id == r.subject_talent_id).first()
+        result.append({
+            "id": str(r.id),
+            "status": r.status,
+            "message": r.message,
+            "created_at": r.created_at,
+            "recruiter": {"id": str(recruiter.id), "name": f"{recruiter.email}"} if recruiter else None,
+            "talent": {"id": str(talent.id), "name": f"{talent.email}"} if talent else None
+        })
+    return result

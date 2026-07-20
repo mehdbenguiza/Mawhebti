@@ -14,6 +14,11 @@ export const recruitmentService = {
     return response.data;
   },
 
+  getRequests: async () => {
+    const response = await axios.get(`${API_URL}/recruitment/requests`);
+    return response.data;
+  },
+
   getConversations: async () => {
     const response = await axios.get(`${API_URL}/conversations/`);
     return response.data;
