@@ -18,19 +18,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Création de l'enum UserRole
-    user_role = postgresql.ENUM(
-        'TALENT_MINOR', 'TALENT_MAJOR', 'PARENT', 'RECRUITER', 'MODERATOR', 'ADMIN',
-        name='userrole'
-    )
-    user_role.create(op.get_bind(), checkfirst=True)
-
-    # Création de l'enum UserStatus
-    user_status = postgresql.ENUM(
-        'DRAFT', 'PENDING', 'ACTIVE', 'SUSPENDED', 'BLOCKED', 'DELETED',
-        name='userstatus'
-    )
-    user_status.create(op.get_bind(), checkfirst=True)
 
     # Table users
     op.create_table(
@@ -38,8 +25,8 @@ def upgrade() -> None:
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column('email', sa.String(254), nullable=False, unique=True),
         sa.Column('password_hash', sa.String(), nullable=False),
-        sa.Column('role', sa.Enum('TALENT_MINOR', 'TALENT_MAJOR', 'PARENT', 'RECRUITER', 'MODERATOR', 'ADMIN', name='userrole', create_type=False), nullable=False),
-        sa.Column('status', sa.Enum('DRAFT', 'PENDING', 'ACTIVE', 'SUSPENDED', 'BLOCKED', 'DELETED', name='userstatus', create_type=False), nullable=False, server_default='PENDING'),
+        sa.Column('role', sa.Enum('TALENT_MINOR', 'TALENT_MAJOR', 'PARENT', 'RECRUITER', 'MODERATOR', 'ADMIN', name='userrole'), nullable=False),
+        sa.Column('status', sa.Enum('DRAFT', 'PENDING', 'ACTIVE', 'SUSPENDED', 'BLOCKED', 'DELETED', name='userstatus'), nullable=False, server_default='PENDING'),
         sa.Column('is_verified', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('email_verified_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('last_login_at', sa.DateTime(timezone=True), nullable=True),
