@@ -9,20 +9,25 @@ from app.models.parent_child import ParentChildLink, LinkStatus
 
 class VideoService:
     @staticmethod
-    async def process_video_background(db: Session, video_id: str, file_path_absolute: str):
+    async def process_video_background(video_id: str, file_path_absolute: str):
+        from app.core.database import SessionLocal
         """Tâche d'arrière-plan pour analyser la vidéo avec l'IA"""
         ai_result = await ai_service.process_video(file_path_absolute)
         
-        video = db.query(Video).filter(Video.id == video_id).first()
-        if video:
-            video.transcription = ai_result["transcription"]
-            video.ai_tags = ai_result["tags"]
-            
-            # Si le statut était PROCESSING (pour les majeurs), on le publie directement une fois l'IA terminée
-            if video.status == VideoStatus.PROCESSING:
-                video.status = VideoStatus.PUBLISHED
+        db = SessionLocal()
+        try:
+            video = db.query(Video).filter(Video.id == video_id).first()
+            if video:
+                video.transcription = ai_result["transcription"]
+                video.ai_tags = ai_result["tags"]
                 
-            db.commit()
+                # Si le statut était PROCESSING (pour les majeurs), on le publie directement une fois l'IA terminée
+                if video.status == VideoStatus.PROCESSING:
+                    video.status = VideoStatus.PUBLISHED
+                    
+                db.commit()
+        finally:
+            db.close()
 
     @staticmethod
     async def upload_video(
@@ -74,7 +79,7 @@ class VideoService:
         absolute_path = os.path.join(upload_dir, file_name)
 
         # 5. Lancement de l'IA en tâche de fond (non-bloquant pour l'utilisateur)
-        background_tasks.add_task(VideoService.process_video_background, db, str(new_video.id), absolute_path)
+        background_tasks.add_task(VideoService.process_video_background, str(new_video.id), absolute_path)
 
         return new_video
 
