@@ -1,8 +1,14 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-app = FastAPI(
+# Initialize EventBus listeners AVANT d'importer le reste
+# On importe via des noms différents pour ne pas écraser la variable `app`
+import app.services.audit_service as _audit_service
+import app.services.notification_service as _notification_service
+
+fastapi_app = FastAPI(
     title="Mawhebti API",
     description="API pour la plateforme Mawhebti",
     version="1.0.0",
@@ -16,7 +22,7 @@ _raw_origins = os.getenv(
 )
 ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
-app.add_middleware(
+fastapi_app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
@@ -25,17 +31,15 @@ app.add_middleware(
 )
 
 from app.api.v1.router import api_router
-from fastapi.staticfiles import StaticFiles
-
-# Initialize EventBus listeners
-import app.services.audit_service
-import app.services.notification_service
 
 # Monter le dossier uploads pour servir les vidéos et avatars
 os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+fastapi_app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-app.include_router(api_router, prefix="/api/v1")
+fastapi_app.include_router(api_router, prefix="/api/v1")
+
+# Alias pour compatibilité uvicorn (uvicorn app.main:app)
+app = fastapi_app
 
 @app.get("/health")
 def health_check():
