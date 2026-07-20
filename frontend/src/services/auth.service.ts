@@ -1,6 +1,6 @@
 import api from './api';
-import { LoginRequest, UserCreate, AuthResponse } from '../types/auth';
-import { User } from '../store/authStore';
+import type { LoginRequest, UserCreate, AuthResponse } from '../types/auth';
+import type { User } from '../store/authStore';
 
 export const authService = {
   login: async (data: LoginRequest) => {

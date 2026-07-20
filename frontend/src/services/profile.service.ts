@@ -1,5 +1,5 @@
 import api from './api';
-import { ProfileUpdate, ProfileResponsePrivate } from '../types/profile';
+import type { ProfileUpdate, ProfileResponsePrivate } from '../types/profile';
 
 export const profileService = {
   getMyProfile: async (): Promise<ProfileResponsePrivate> => {
