@@ -25,6 +25,12 @@ app.add_middleware(
 )
 
 from app.api.v1.router import api_router
+from fastapi.staticfiles import StaticFiles
+
+# Monter le dossier uploads pour servir les vidéos et avatars
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/health")
