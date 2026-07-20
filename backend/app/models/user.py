@@ -23,6 +23,13 @@ class UserStatus(str, enum.Enum):
     BLOCKED = "BLOCKED"
     DELETED = "DELETED"
 
+class UserVerificationLevel(str, enum.Enum):
+    UNVERIFIED = "UNVERIFIED"
+    EMAIL_VERIFIED = "EMAIL_VERIFIED"
+    PHONE_VERIFIED = "PHONE_VERIFIED"
+    KYC_VERIFIED = "KYC_VERIFIED"
+    BANK_VERIFIED = "BANK_VERIFIED"
+
 class User(Base):
     __tablename__ = "users"
 
@@ -47,6 +54,8 @@ class User(Base):
     phone_verified_at = Column(DateTime(timezone=True), nullable=True)
     kyc_verified_at = Column(DateTime(timezone=True), nullable=True)
     bank_verified_at = Column(DateTime(timezone=True), nullable=True)
+    
+    verification_level = Column(Enum(UserVerificationLevel), nullable=False, default=UserVerificationLevel.UNVERIFIED)
 
     @property
     def trust_level(self) -> int:

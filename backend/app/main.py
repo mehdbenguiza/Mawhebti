@@ -27,6 +27,10 @@ app.add_middleware(
 from app.api.v1.router import api_router
 from fastapi.staticfiles import StaticFiles
 
+# Initialize EventBus listeners
+import app.services.audit_service
+import app.services.notification_service
+
 # Monter le dossier uploads pour servir les vidéos et avatars
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
