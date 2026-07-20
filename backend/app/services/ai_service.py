@@ -43,10 +43,9 @@ class AIService:
             # 2. Transcription via Whisper (Groq)
             with open(audio_path, "rb") as audio_file:
                 transcription_response = await self.client.audio.transcriptions.create(
-                    file=(os.path.basename(audio_path), audio_file.read()),
+                    file=audio_file,
                     model="whisper-large-v3",
-                    response_format="json",
-                    language="fr"
+                    response_format="json"
                 )
             
             transcription_text = transcription_response.text
@@ -60,7 +59,7 @@ class AIService:
             )
             
             chat_response = await self.client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3
             )
