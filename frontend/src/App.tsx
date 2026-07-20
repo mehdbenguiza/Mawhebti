@@ -6,6 +6,7 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { TalentDashboard } from './pages/dashboard/TalentDashboard';
+import { UploadVideoPage } from './pages/dashboard/UploadVideoPage';
 import { RecruiterDashboard } from './pages/dashboard/RecruiterDashboard';
 import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
@@ -64,6 +65,7 @@ function App() {
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<TalentDashboard />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="upload" element={<UploadVideoPage />} />
           </Route>
 
           {/* Dashboard Recruteur */}

@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
-const navLinks = [
-  { to: 'overview', label: 'Vue d\'ensemble', icon: '🏠' },
-  { to: 'profile', label: 'Mon profil', icon: '👤' },
-];
+const getNavLinks = (role: string | undefined) => {
+  const links = [
+    { to: 'overview', label: 'Vue d\'ensemble', icon: '🏠' },
+    { to: 'profile', label: 'Mon profil', icon: '👤' },
+  ];
+  if (role === 'TALENT_MINOR' || role === 'TALENT_MAJOR') {
+    links.push({ to: 'upload', label: 'Publier une vidéo', icon: '🎥' });
+  }
+  return links;
+};
 
 /**
  * Layout principal de l'espace connecté.
@@ -54,7 +60,7 @@ export const DashboardLayout: React.FC = () => {
 
         {/* Navigation links */}
         <nav className="flex-1 py-4 space-y-1 px-2">
-          {navLinks.map((link) => (
+          {getNavLinks(user?.role).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

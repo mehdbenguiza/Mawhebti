@@ -13,6 +13,8 @@ from app.core.database import Base, DATABASE_URL
 # Make sure ALL models are loaded for autogenerate
 from app.models.user import User  # noqa: F401
 from app.models.profile import Profile  # noqa: F401
+from app.models.parent_child import ParentChildLink  # noqa: F401
+from app.models.video import Video  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
