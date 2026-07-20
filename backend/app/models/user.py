@@ -55,7 +55,7 @@ class User(Base):
     kyc_verified_at = Column(DateTime(timezone=True), nullable=True)
     bank_verified_at = Column(DateTime(timezone=True), nullable=True)
     
-    verification_level = Column(Enum(UserVerificationLevel), nullable=False, default=UserVerificationLevel.UNVERIFIED)
+    verification_level = Column(Enum(UserVerificationLevel, native_enum=False, length=50), nullable=False, default=UserVerificationLevel.UNVERIFIED)
 
     @property
     def trust_level(self) -> int:
