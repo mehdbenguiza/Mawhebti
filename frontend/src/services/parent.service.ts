@@ -12,8 +12,8 @@ export const parentService = {
     return response.data;
   },
 
-  handleRequest: async (linkId: string, action: 'approve' | 'reject'): Promise<ParentChildLink> => {
-    const response = await api.put(`/parents/requests/${linkId}?action=${action}`);
+  handleRequest: async (linkId: string, action: 'approve' | 'reject', password: string): Promise<ParentChildLink> => {
+    const response = await api.put(`/parents/requests/${linkId}`, { action, password });
     return response.data;
   },
 };

@@ -7,6 +7,8 @@ export interface UserCreate {
   email: string;
   password: string;
   role: string;
+  parent_email?: string;
+  phone_number?: string;
 }
 
 export interface AuthResponse {

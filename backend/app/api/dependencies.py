@@ -30,4 +30,24 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
+        
+    # Empêcher les utilisateurs bloqués de se connecter
+    if user.status == "BLOCKED":
+        raise HTTPException(status_code=403, detail="Votre compte a été bloqué.")
+        
     return user
+
+
+def require_trust_level(level: int):
+    """
+    Dépendance FastAPI pour restreindre l'accès en fonction du niveau de confiance.
+    Utilisation: @router.post("/x", dependencies=[Depends(require_trust_level(2))])
+    """
+    def trust_level_checker(current_user: User = Depends(get_current_user)):
+        if current_user.trust_level < level:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Niveau de confiance insuffisant. Requis: {level}, Actuel: {current_user.trust_level}"
+            )
+        return current_user
+    return trust_level_checker

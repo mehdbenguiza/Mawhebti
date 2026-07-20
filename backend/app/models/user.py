@@ -42,5 +42,27 @@ class User(Base):
 
     version = Column(Integer, default=1, server_default="1")
 
+    # Vérifications et Niveaux de confiance
+    phone_number = Column(String(50), nullable=True)
+    phone_verified_at = Column(DateTime(timezone=True), nullable=True)
+    kyc_verified_at = Column(DateTime(timezone=True), nullable=True)
+    bank_verified_at = Column(DateTime(timezone=True), nullable=True)
+
+    @property
+    def trust_level(self) -> int:
+        """
+        Niveau 0: Email vérifié (ou inscrit de base)
+        Niveau 1: Téléphone vérifié
+        Niveau 2: KYC vérifié
+        Niveau 3: Banque vérifiée
+        """
+        if self.bank_verified_at and self.kyc_verified_at:
+            return 3
+        if self.kyc_verified_at:
+            return 2
+        if self.phone_verified_at:
+            return 1
+        return 0
+
     # Relation one-to-one vers le profil
     profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
