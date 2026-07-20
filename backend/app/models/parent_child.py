@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import Column, ForeignKey, DateTime, Enum, func
+from sqlalchemy import Column, ForeignKey, DateTime, Enum, func, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
