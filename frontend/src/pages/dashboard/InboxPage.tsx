@@ -38,9 +38,19 @@ export const InboxPage: React.FC = () => {
       await recruitmentService.acceptContactRequest(id);
       await loadData();
       setActiveTab('conversations');
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Erreur lors de l'acceptation.");
+      alert(e.response?.data?.detail || "Erreur lors de l'acceptation.");
+    }
+  };
+
+  const handleRejectRequest = async (id: string) => {
+    try {
+      await recruitmentService.rejectContactRequest(id);
+      await loadData();
+    } catch (e: any) {
+      console.error(e);
+      alert(e.response?.data?.detail || "Erreur lors du refus.");
     }
   };
 
@@ -56,10 +66,10 @@ export const InboxPage: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConversation || !user) return;
-    
+    if (!newMessage.trim() || !activeConversation) return;
+
     try {
-      await recruitmentService.sendMessage(activeConversation.id, newMessage, user.id);
+      await recruitmentService.sendMessage(activeConversation.id, newMessage);
       setNewMessage('');
       await loadMessages(activeConversation);
     } catch (e: any) {
@@ -101,24 +111,40 @@ export const InboxPage: React.FC = () => {
                 <div key={req.id} className="p-4 bg-gray-900 rounded-lg border border-gray-800 hover:bg-gray-800 transition">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <span className="font-bold text-blue-400">Demande de contact</span>
-                      <p className="text-xs text-gray-500">Pour le talent: {req.talent?.name || 'Inconnu'}</p>
+                      {req.i_am_sender
+                        ? <span className="font-bold text-purple-400">📤 Demande envoyée</span>
+                        : <span className="font-bold text-blue-400">📥 Demande reçue</span>
+                      }
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {req.i_am_sender
+                          ? `Pour: ${req.talent?.name || 'Inconnu'}`
+                          : `De: ${req.recruiter?.name || 'Inconnu'} · Pour: ${req.talent?.name || 'Inconnu'}`
+                        }
+                      </p>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded ${req.status === 'PENDING' ? 'bg-yellow-900 text-yellow-300' : 'bg-green-900 text-green-300'}`}>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      req.status === 'PENDING' ? 'bg-yellow-900 text-yellow-300' :
+                      req.status === 'ACCEPTED' ? 'bg-green-900 text-green-300' :
+                      'bg-red-900 text-red-300'
+                    }`}>
                       {req.status}
                     </span>
                   </div>
                   <p className="text-sm text-gray-300 mt-2 bg-gray-950 p-2 rounded italic">"{req.message}"</p>
-                  
-                  {req.status === 'PENDING' && (
+
+                  {/* Boutons uniquement pour le destinataire sur les demandes PENDING */}
+                  {req.status === 'PENDING' && !req.i_am_sender && (
                     <div className="mt-4 flex gap-2">
                       <button onClick={() => handleAcceptRequest(req.id)} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded">
-                        Accepter
+                        ✅ Accepter
                       </button>
-                      <button className="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold py-2 rounded">
-                        Refuser
+                      <button onClick={() => handleRejectRequest(req.id)} className="flex-1 bg-red-900 hover:bg-red-800 text-white text-xs font-bold py-2 rounded">
+                        ❌ Refuser
                       </button>
                     </div>
+                  )}
+                  {req.status === 'PENDING' && req.i_am_sender && (
+                    <p className="mt-3 text-xs text-gray-500 italic">⏳ En attente de réponse du destinataire...</p>
                   )}
                 </div>
               ))}

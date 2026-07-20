@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any
 from uuid import UUID
 
 from app.core.database import get_db
@@ -14,7 +13,6 @@ router = APIRouter()
 def create_recruitment_request(recruiter_id: UUID, subject_talent_id: UUID, message: str, db: Session = Depends(get_db)):
     """
     Crée une nouvelle demande de contact (Zero Trust Routing).
-    recruiter_id : l'UUID du recruteur connecté (à remplacer par current_user.id quand l'auth sera branchée partout)
     """
     if recruiter_id == subject_talent_id:
         raise HTTPException(status_code=400, detail="Vous ne pouvez pas vous envoyer une demande à vous-même.")
@@ -26,24 +24,26 @@ def create_recruitment_request(recruiter_id: UUID, subject_talent_id: UUID, mess
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/requests/{request_id}/accept")
 def accept_recruitment_request(request_id: UUID, acceptor_id: UUID, db: Session = Depends(get_db)):
     """
-    Accepte une demande et crée la conversation associée.
-    acceptor_id : l'UUID du parent/talent qui accepte (ne peut pas être le recruteur qui a envoyé la demande)
+    Accepte une demande de contact.
+    Seul le destinataire (recipient) peut accepter, jamais l'expéditeur.
     """
+    from app.models.user import User
+
     req = db.query(RecruitmentRequest).filter(RecruitmentRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Demande introuvable.")
-    
+
+    if req.status != RecruitmentRequestStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Cette demande a déjà été traitée.")
+
     # Empêcher l'expéditeur d'accepter sa propre demande
     if req.recruiter_id == acceptor_id:
         raise HTTPException(status_code=403, detail="Vous ne pouvez pas accepter votre propre demande de contact.")
-    
-    # Vérifier que c'est bien le destinataire qui accepte
-    if req.recipient_id != acceptor_id:
-        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à accepter cette demande.")
-    
+
     try:
         conv = ConversationService.create_conversation_from_request(db, request_id)
         return {"conversation_id": str(conv.id), "message": "Demande acceptée, conversation créée."}
@@ -52,26 +52,55 @@ def accept_recruitment_request(request_id: UUID, acceptor_id: UUID, db: Session 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@router.post("/requests/{request_id}/reject")
+def reject_recruitment_request(request_id: UUID, rejector_id: UUID, db: Session = Depends(get_db)):
+    """
+    Refuse une demande de contact.
+    """
+    req = db.query(RecruitmentRequest).filter(RecruitmentRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Demande introuvable.")
+
+    if req.recruiter_id == rejector_id:
+        raise HTTPException(status_code=403, detail="Vous ne pouvez pas refuser votre propre demande.")
+
+    req.status = RecruitmentRequestStatus.REJECTED
+    db.commit()
+    return {"message": "Demande refusée."}
+
+
 @router.get("/requests")
-def get_recruitment_requests(db: Session = Depends(get_db)):
+def get_recruitment_requests(user_id: UUID, db: Session = Depends(get_db)):
     """
-    Retourne la liste des demandes de contact (mock MVP: retourne toutes les demandes)
+    Retourne les demandes de contact liées à l'utilisateur connecté
+    (soit comme destinataire, soit comme recruteur).
     """
-    from app.models.recruitment import RecruitmentRequest
     from app.models.user import User
-    
-    requests = db.query(RecruitmentRequest).all()
-    # Serialize manually for MVP
+    from app.models.profile import Profile
+
+    requests = db.query(RecruitmentRequest).filter(
+        (RecruitmentRequest.recipient_id == user_id) |
+        (RecruitmentRequest.recruiter_id == user_id)
+    ).order_by(RecruitmentRequest.created_at.desc()).all()
+
     result = []
     for r in requests:
         recruiter = db.query(User).filter(User.id == r.recruiter_id).first()
+        recruiter_profile = db.query(Profile).filter(Profile.user_id == r.recruiter_id).first()
         talent = db.query(User).filter(User.id == r.subject_talent_id).first()
+        talent_profile = db.query(Profile).filter(Profile.user_id == r.subject_talent_id).first()
+
+        recruiter_name = f"{recruiter_profile.first_name} {recruiter_profile.last_name}".strip() if recruiter_profile else recruiter.email if recruiter else "Inconnu"
+        talent_name = f"{talent_profile.first_name} {talent_profile.last_name}".strip() if talent_profile else talent.email if talent else "Inconnu"
+
         result.append({
             "id": str(r.id),
             "status": r.status,
             "message": r.message,
             "created_at": r.created_at,
-            "recruiter": {"id": str(recruiter.id), "name": f"{recruiter.email}"} if recruiter else None,
-            "talent": {"id": str(talent.id), "name": f"{talent.email}"} if talent else None
+            "i_am_sender": str(r.recruiter_id) == str(user_id),
+            "recruiter": {"id": str(r.recruiter_id), "name": recruiter_name},
+            "talent": {"id": str(r.subject_talent_id), "name": talent_name},
         })
     return result
