@@ -19,9 +19,11 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
   }, [isActive]);
 
   // Construct absolute URL for the video
+  const baseUrl = API_URL.replace('/api/v1', '');
+  const cleanFilePath = video.file_path.startsWith('/') ? video.file_path.substring(1) : video.file_path;
   const videoUrl = video.file_path.startsWith('http') 
     ? video.file_path 
-    : `${API_URL.replace('/api/v1', '')}/${video.file_path}`;
+    : `${baseUrl}/${cleanFilePath}`;
 
   return (
     <div className="relative w-full h-screen snap-start bg-black flex items-center justify-center">
@@ -31,9 +33,12 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         className="w-full h-full object-cover"
         loop
         playsInline
-        muted={false} // Depending on browser policy, might need to be true by default
-        controls={false}
-        onClick={() => {
+        muted={true} // Obligatoire pour l'autoplay sur la plupart des navigateurs
+        controls={true} // On ajoute les contrôles pour l'instant pour débugger et le son
+        onClick={(e) => {
+          // Si on a les contrôles natifs, le onClick manuel n'est plus indispensable,
+          // mais on le garde pour faire play/pause en tapant l'écran.
+          e.preventDefault();
           if (videoRef.current?.paused) videoRef.current.play();
           else videoRef.current?.pause();
         }}
