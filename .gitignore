@@ -55,6 +55,7 @@ dist-ssr/
 *.local
 
 # Database
+*.db
 *.sqlite3
 
 # Docker
