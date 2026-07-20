@@ -17,17 +17,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # ── 1. Colonne verification_level sur users (VARCHAR pour éviter le type natif PG) ──
-    op.add_column('users', sa.Column(
-        'verification_level',
-        sa.String(length=50),
-        nullable=False,
-        server_default='UNVERIFIED'
-    ))
-    op.add_column('users', sa.Column('phone_number', sa.String(length=50), nullable=True))
-    op.add_column('users', sa.Column('phone_verified_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('users', sa.Column('kyc_verified_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('users', sa.Column('bank_verified_at', sa.DateTime(timezone=True), nullable=True))
+    # ── 1. Colonnes users — on utilise IF NOT EXISTS car l'ancienne migration a pu les créer partiellement ──
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50)")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_verified_at TIMESTAMPTZ")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS bank_verified_at TIMESTAMPTZ")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_level VARCHAR(50) NOT NULL DEFAULT 'UNVERIFIED'")
 
     # ── 2. Table recruitment_requests ──
     op.create_table(
