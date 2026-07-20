@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Enum, func, JSON
+from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Enum, func, JSON, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -24,6 +24,9 @@ class Video(Base):
     
     transcription = Column(Text, nullable=True)
     ai_tags = Column(JSON, nullable=True)
+    
+    views_count = Column(Integer, default=0, nullable=False)
+    likes_count = Column(Integer, default=0, nullable=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

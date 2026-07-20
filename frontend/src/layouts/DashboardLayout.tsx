@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 
 const getNavLinks = (role: string | undefined) => {
   const links = [
+    { to: '/feed', label: 'Explorer', icon: '📱' },
     { to: 'overview', label: 'Vue d\'ensemble', icon: '🏠' },
     { to: 'profile', label: 'Mon profil', icon: '👤' },
   ];

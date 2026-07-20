@@ -32,4 +32,10 @@ export const videoService = {
     });
     return response.data;
   },
+
+  getFeed: async (page = 1, limit = 10, sortBy = 'recent'): Promise<any[]> => {
+    // any[] should be VideoFeedResponse[] but we need to import it
+    const response = await api.get(`/videos/feed?page=${page}&limit=${limit}&sort_by=${sortBy}`);
+    return response.data;
+  },
 };

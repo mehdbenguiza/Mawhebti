@@ -10,6 +10,7 @@ import { UploadVideoPage } from './pages/dashboard/UploadVideoPage';
 import { RecruiterDashboard } from './pages/dashboard/RecruiterDashboard';
 import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
+import { FeedPage } from './pages/feed/FeedPage';
 import { useAuthStore } from './store/authStore';
 
 const queryClient = new QueryClient({
@@ -21,12 +22,9 @@ const queryClient = new QueryClient({
   },
 });
 
-/**
- * Redirige automatiquement un utilisateur connecté vers son dashboard selon son rôle.
- */
 function RoleRedirect() {
   const user = useAuthStore((state) => state.user);
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/feed" replace />;
 
   const roleMap: Record<string, string> = {
     TALENT_MINOR: '/dashboard/talent/overview',
@@ -36,7 +34,7 @@ function RoleRedirect() {
     MODERATOR: '/dashboard/talent/overview',
     ADMIN: '/dashboard/talent/overview',
   };
-  return <Navigate to={roleMap[user.role] ?? '/login'} replace />;
+  return <Navigate to={roleMap[user.role] ?? '/feed'} replace />;
 }
 
 function App() {
@@ -47,9 +45,10 @@ function App() {
           {/* Routes publiques */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/feed" element={<FeedPage />} />
 
           {/* Redirect racine */}
-          <Route path="/" element={<RoleRedirect />} />
+          <Route path="/" element={<Navigate to="/feed" replace />} />
 
           {/* Dashboard Talent (Majeur et Mineur) */}
           <Route
@@ -100,8 +99,11 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
           </Route>
 
-          {/* Fallback : toute URL inconnue redirige selon le rôle */}
-          <Route path="*" element={<RoleRedirect />} />
+          {/* Dashboard Root Redirection */}
+          <Route path="/dashboard" element={<RoleRedirect />} />
+
+          {/* Fallback : toute URL inconnue redirige vers feed */}
+          <Route path="*" element={<Navigate to="/feed" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

@@ -15,6 +15,19 @@ class VideoResponse(VideoBase):
     status: VideoStatus
     transcription: Optional[str] = None
     ai_tags: Optional[List[str]] = None
+    views_count: int
+    likes_count: int
     created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class CreatorInfo(BaseModel):
+    id: UUID
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    trust_level: int
+    
+class VideoFeedResponse(VideoResponse):
+    creator: CreatorInfo
     
     model_config = ConfigDict(from_attributes=True)

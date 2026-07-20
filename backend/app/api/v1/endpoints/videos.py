@@ -88,3 +88,55 @@ def consent_to_video(
     db.commit()
     db.refresh(video)
     return video
+
+from typing import Optional
+from app.schemas.video import VideoFeedResponse
+from sqlalchemy import desc
+from app.models.profile import Profile
+
+@router.get("/feed", response_model=List[VideoFeedResponse])
+def get_video_feed(
+    page: int = 1,
+    limit: int = 10,
+    sort_by: str = "recent",
+    category: Optional[str] = None,
+    db: Session = Depends(get_db)
+    # Auth is completely optional for reading the feed!
+):
+    query = db.query(Video, User, Profile).join(
+        User, Video.user_id == User.id
+    ).outerjoin(
+        Profile, User.id == Profile.user_id
+    ).filter(
+        Video.status == VideoStatus.PUBLISHED
+    )
+    
+    # Sort
+    if sort_by == "popular":
+        query = query.order_by(desc(Video.views_count), desc(Video.likes_count), desc(Video.created_at))
+    else:
+        # Default: recent
+        query = query.order_by(desc(Video.created_at))
+        
+    # Pagination
+    offset = (page - 1) * limit
+    results = query.offset(offset).limit(limit).all()
+    
+    # Map to schema
+    feed = []
+    for video, user, profile in results:
+        # Pydantic will convert the Video object, we just inject the creator part
+        video_dict = video.__dict__.copy()
+        
+        # Build creator info
+        creator_info = {
+            "id": user.id,
+            "first_name": profile.first_name if profile else None,
+            "last_name": profile.last_name if profile else None,
+            "trust_level": user.trust_level
+        }
+        video_dict["creator"] = creator_info
+        
+        feed.append(video_dict)
+        
+    return feed
