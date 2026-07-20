@@ -10,8 +10,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.database import Base, DATABASE_URL
-# Make sure models are loaded
-from app.models.user import User
+# Make sure ALL models are loaded for autogenerate
+from app.models.user import User  # noqa: F401
+from app.models.profile import Profile  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
