@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { videoService } from '../../../services/video.service';
-import { useAuthStore } from '../../../store/authStore';
+import { videoService } from '../../services/video.service';
+import { useAuthStore } from '../../store/authStore';
 
 export const UploadVideoPage: React.FC = () => {
   const [title, setTitle] = useState('');
