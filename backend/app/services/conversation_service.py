@@ -2,8 +2,8 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.models.messaging import Conversation, ConversationParticipant, ConversationParticipantRole, ConversationStatus
-from app.models.recruitment import RecruitmentRequest, RecruitmentRequestStatus, RecruitmentStage
+from app.models.messaging import Conversation, ConversationParticipant, ConversationParticipantRole, ConversationStatus, RecruitmentStage
+from app.models.recruitment import RecruitmentRequest, RecruitmentRequestStatus
 from app.services.event_bus import event_bus
 
 class ConversationService:
