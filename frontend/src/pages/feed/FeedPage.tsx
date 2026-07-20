@@ -5,10 +5,27 @@ import { VideoFeedResponse } from '../../types/video';
 import { useAuthStore } from '../../store/authStore';
 import { Link } from 'react-router-dom';
 
+import { recruitmentService } from '../../services/recruitment.service';
+
 const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = ({ video, isActive }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAuthStore();
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactStatus, setContactStatus] = useState<'idle'|'loading'|'success'|'error'>('idle');
   const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
+
+  const handleContact = async () => {
+    try {
+      setContactStatus('loading');
+      await recruitmentService.createContactRequest(video.creator.id, contactMessage || 'Bonjour, je souhaite entrer en contact concernant ce talent.');
+      setContactStatus('success');
+      setTimeout(() => setShowContactModal(false), 2000);
+    } catch (e) {
+      console.error(e);
+      setContactStatus('error');
+    }
+  };
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -93,7 +110,7 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         </button>
 
         {user?.role === 'RECRUITER' && (
-          <button className="flex flex-col items-center gap-1 transition transform hover:scale-110">
+          <button onClick={() => setShowContactModal(true)} className="flex flex-col items-center gap-1 transition transform hover:scale-110">
             <div className="bg-blue-600 p-3 rounded-full text-white text-xl shadow-lg">
               📩
             </div>
@@ -101,6 +118,50 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
           </button>
         )}
       </div>
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="absolute inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm text-white">
+            <h3 className="text-xl font-bold mb-4">Contacter {video.creator?.first_name}</h3>
+            
+            {contactStatus === 'success' ? (
+              <div className="text-green-400 text-center py-4">Demande de contact envoyée avec succès ! 🎉</div>
+            ) : contactStatus === 'error' ? (
+              <div className="text-red-400 text-center py-4">Erreur lors de l'envoi de la demande. Vous avez peut-être déjà une demande en cours.</div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-400 mb-4">
+                  En tant que recruteur vérifié, vous pouvez envoyer une demande de contact.
+                  S'il s'agit d'un mineur, le message sera automatiquement transmis à son parent/tuteur légal (Zero Trust).
+                </p>
+                <textarea 
+                  className="w-full bg-gray-800 border border-gray-600 rounded-md p-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+                  rows={4}
+                  placeholder="Bonjour, je représente..."
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                />
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setShowContactModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    onClick={handleContact}
+                    disabled={contactStatus === 'loading'}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 disabled:opacity-50"
+                  >
+                    {contactStatus === 'loading' ? 'Envoi...' : 'Envoyer'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
