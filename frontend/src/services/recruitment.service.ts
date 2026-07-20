@@ -1,16 +1,24 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
 
 export const recruitmentService = {
   createContactRequest: async (talentId: string, message: string) => {
-    // In a real app we pass auth tokens
-    const response = await axios.post(`${API_URL}/recruitment/requests?subject_talent_id=${talentId}&message=${encodeURIComponent(message)}`);
+    const currentUserId = useAuthStore.getState().user?.id;
+    if (!currentUserId) throw new Error("Non connecté");
+    const response = await axios.post(
+      `${API_URL}/recruitment/requests?recruiter_id=${currentUserId}&subject_talent_id=${talentId}&message=${encodeURIComponent(message)}`
+    );
     return response.data;
   },
 
   acceptContactRequest: async (requestId: string) => {
-    const response = await axios.post(`${API_URL}/recruitment/requests/${requestId}/accept`);
+    const currentUserId = useAuthStore.getState().user?.id;
+    if (!currentUserId) throw new Error("Non connecté");
+    const response = await axios.post(
+      `${API_URL}/recruitment/requests/${requestId}/accept?acceptor_id=${currentUserId}`
+    );
     return response.data;
   },
 
@@ -30,7 +38,9 @@ export const recruitmentService = {
   },
 
   sendMessage: async (conversationId: string, content: string, senderId: string) => {
-    const response = await axios.post(`${API_URL}/conversations/${conversationId}/messages?content=${encodeURIComponent(content)}&sender_id=${senderId}`);
+    const response = await axios.post(
+      `${API_URL}/conversations/${conversationId}/messages?content=${encodeURIComponent(content)}&sender_id=${senderId}`
+    );
     return response.data;
   }
 };

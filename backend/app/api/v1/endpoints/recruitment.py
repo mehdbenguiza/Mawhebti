@@ -6,33 +6,49 @@ from uuid import UUID
 from app.core.database import get_db
 from app.services.contact_service import ContactService
 from app.services.conversation_service import ConversationService
+from app.models.recruitment import RecruitmentRequest, RecruitmentRequestStatus
 
 router = APIRouter()
 
 @router.post("/requests")
-def create_recruitment_request(subject_talent_id: UUID, message: str, db: Session = Depends(get_db)):
+def create_recruitment_request(recruiter_id: UUID, subject_talent_id: UUID, message: str, db: Session = Depends(get_db)):
     """
     Crée une nouvelle demande de contact (Zero Trust Routing).
+    recruiter_id : l'UUID du recruteur connecté (à remplacer par current_user.id quand l'auth sera branchée partout)
     """
-    # TODO: Get recruiter_id from current_user
-    # Mock recruiter for MVP
-    recruiter_id = subject_talent_id # Temporaire : remplacer par current_user.id
-    
-    # En MVP sans auth branchée partout, on simule :
+    if recruiter_id == subject_talent_id:
+        raise HTTPException(status_code=400, detail="Vous ne pouvez pas vous envoyer une demande à vous-même.")
     try:
         req = ContactService.create_recruitment_request(db, recruiter_id=recruiter_id, subject_talent_id=subject_talent_id, message=message)
         return {"id": str(req.id), "status": req.status, "message": "Demande de contact envoyée avec succès."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/requests/{request_id}/accept")
-def accept_recruitment_request(request_id: UUID, db: Session = Depends(get_db)):
+def accept_recruitment_request(request_id: UUID, acceptor_id: UUID, db: Session = Depends(get_db)):
     """
     Accepte une demande et crée la conversation associée.
+    acceptor_id : l'UUID du parent/talent qui accepte (ne peut pas être le recruteur qui a envoyé la demande)
     """
+    req = db.query(RecruitmentRequest).filter(RecruitmentRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Demande introuvable.")
+    
+    # Empêcher l'expéditeur d'accepter sa propre demande
+    if req.recruiter_id == acceptor_id:
+        raise HTTPException(status_code=403, detail="Vous ne pouvez pas accepter votre propre demande de contact.")
+    
+    # Vérifier que c'est bien le destinataire qui accepte
+    if req.recipient_id != acceptor_id:
+        raise HTTPException(status_code=403, detail="Vous n'êtes pas autorisé à accepter cette demande.")
+    
     try:
         conv = ConversationService.create_conversation_from_request(db, request_id)
         return {"conversation_id": str(conv.id), "message": "Demande acceptée, conversation créée."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
