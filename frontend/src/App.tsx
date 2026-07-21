@@ -12,6 +12,7 @@ import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { FeedPage } from './pages/feed/FeedPage';
 import { InboxPage } from './pages/dashboard/InboxPage';
+import LandingPage from './pages/LandingPage';
 import { useAuthStore } from './store/authStore';
 
 const queryClient = new QueryClient({
@@ -44,12 +45,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Routes publiques */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/feed" element={<FeedPage />} />
-
-          {/* Redirect racine */}
-          <Route path="/" element={<Navigate to="/feed" replace />} />
 
           {/* Dashboard Talent (Majeur et Mineur) */}
           <Route
