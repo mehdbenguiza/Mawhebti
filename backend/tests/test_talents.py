@@ -1,4 +1,5 @@
 import pytest
+import datetime
 from app.models.user import User, UserRole, UserStatus
 from app.models.profile import Profile
 from app.core.security import get_password_hash, create_access_token
@@ -74,7 +75,7 @@ def test_get_public_profile():
     user, profile = create_test_user_with_profile(
         email="pubprofile@example.com", 
         first_name="Bob",
-        date_of_birth="2000-01-01"
+        date_of_birth=datetime.date(2000, 1, 1)
     )
     
     response = client.get(f"/api/v1/talents/{profile.id}")
