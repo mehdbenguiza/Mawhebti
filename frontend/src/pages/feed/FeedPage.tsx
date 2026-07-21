@@ -4,7 +4,6 @@ import { videoService } from '../../services/video.service';
 import { VideoFeedResponse } from '../../types/video';
 import { useAuthStore } from '../../store/authStore';
 import { Link } from 'react-router-dom';
-
 import { recruitmentService } from '../../services/recruitment.service';
 
 const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = ({ video, isActive }) => {
@@ -13,6 +12,7 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactMessage, setContactMessage] = useState('');
   const [contactStatus, setContactStatus] = useState<'idle'|'loading'|'success'|'error'>('idle');
+  const [isPlaying, setIsPlaying] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
 
   const handleContact = async () => {
@@ -29,56 +29,74 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
 
   useEffect(() => {
     if (isActive && videoRef.current) {
-      videoRef.current.play().catch(e => console.log('Auto-play prevented', e));
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(e => console.log('Auto-play prevented', e));
     } else if (videoRef.current) {
       videoRef.current.pause();
+      setIsPlaying(false);
     }
   }, [isActive]);
 
-  // Construct absolute URL for the video
+  const togglePlay = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
+
   const baseUrl = API_URL.replace('/api/v1', '');
   const cleanFilePath = video.file_path.startsWith('/') ? video.file_path.substring(1) : video.file_path;
-  const videoUrl = video.file_path.startsWith('http') 
-    ? video.file_path 
-    : `${baseUrl}/${cleanFilePath}`;
+  const videoUrl = video.file_path.startsWith('http') ? video.file_path : `${baseUrl}/${cleanFilePath}`;
 
   return (
-    <div className="relative w-full h-screen snap-start bg-black flex items-center justify-center">
+    <div className="relative w-full h-full snap-start flex items-center justify-center bg-black sm:rounded-2xl overflow-hidden group">
+      
+      {/* Blurred background effect for desktop */}
+      <div className="absolute inset-0 opacity-40 scale-110 hidden sm:block">
+        <video src={videoUrl} className="w-full h-full object-cover blur-2xl" muted loop />
+      </div>
+
       <video
         ref={videoRef}
         src={videoUrl}
-        className="w-full h-full object-cover"
+        className="relative z-10 w-full h-full object-cover sm:object-contain sm:max-h-full cursor-pointer"
         loop
         playsInline
-        muted={true} // Obligatoire pour l'autoplay sur la plupart des navigateurs
-        controls={true} // On ajoute les contrôles pour l'instant pour débugger et le son
-        onClick={(e) => {
-          // Si on a les contrôles natifs, le onClick manuel n'est plus indispensable,
-          // mais on le garde pour faire play/pause en tapant l'écran.
-          e.preventDefault();
-          if (videoRef.current?.paused) videoRef.current.play();
-          else videoRef.current?.pause();
-        }}
+        muted={true}
+        onClick={togglePlay}
       />
       
-      {/* Overlay: Bottom Left */}
-      <div className="absolute bottom-20 left-4 right-16 text-white z-10 pointer-events-none">
-        <h3 className="text-xl font-bold flex items-center gap-2">
+      {/* Play/Pause indicator animation on click */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm">
+            <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+          </div>
+        </div>
+      )}
+      
+      {/* Overlay: Bottom Left (Info) */}
+      <div className="absolute bottom-4 left-4 right-20 text-white z-30 pointer-events-none" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+        <h3 className="text-lg font-bold flex items-center gap-1.5 mb-1.5">
           @{video.creator?.first_name || 'Talent'} {video.creator?.last_name || ''}
-          {video.creator?.trust_level >= 1 && <span title="Profil Vérifié">🟢</span>}
-          {video.creator?.trust_level >= 2 && <span title="Identité Validée">🔵</span>}
+          {video.creator?.trust_level >= 1 && <span className="text-xs bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded-full border border-teal-500/30 backdrop-blur-md">Vérifié ✓</span>}
         </h3>
-        <p className="font-semibold text-lg mt-1">{video.title}</p>
-        {video.description && <p className="text-sm line-clamp-2 text-gray-200 mt-1">{video.description}</p>}
+        <p className="font-semibold text-sm leading-snug">{video.title}</p>
+        {video.description && <p className="text-xs text-gray-200 mt-1 line-clamp-2">{video.description}</p>}
         
-        {/* Tags IA */}
+        {/* IA Tags */}
         {video.ai_tags && video.ai_tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3 pointer-events-auto">
-            <span className="bg-purple-600 bg-opacity-80 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
-              🟣 IA Analysée
+          <div className="flex flex-wrap gap-1.5 mt-2.5 pointer-events-auto">
+            <span className="bg-purple-600/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-lg">
+              🤖 IA
             </span>
             {video.ai_tags.map((tag, idx) => (
-              <span key={idx} className="bg-white bg-opacity-20 backdrop-blur-sm border border-white/30 text-white text-xs px-2 py-1 rounded-md">
+              <span key={idx} className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] px-2 py-1 rounded-md hover:bg-white/20 transition-colors cursor-pointer">
                 #{tag}
               </span>
             ))}
@@ -86,75 +104,90 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         )}
       </div>
 
-      {/* Overlay: Right Sidebar Actions */}
-      <div className="absolute bottom-20 right-4 flex flex-col items-center gap-6 z-10">
-        <button className="flex flex-col items-center gap-1 transition transform hover:scale-110">
-          <div className="bg-gray-800 bg-opacity-50 p-3 rounded-full border border-gray-600 text-white text-xl">
-            👤
+      {/* Overlay: Right Sidebar Actions (TikTok Style) */}
+      <div className="absolute bottom-6 right-3 flex flex-col items-center gap-5 z-30">
+        
+        {/* Profile */}
+        <div className="relative group/profile cursor-pointer">
+          <div className="w-11 h-11 rounded-full border-2 border-white bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center text-lg shadow-lg">
+            {(video.creator?.first_name?.[0] || 'T').toUpperCase()}
           </div>
-          <span className="text-white text-xs font-medium shadow-sm">Profil</span>
+          <button className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center border border-white shadow-sm hover:scale-110 transition-transform">
+            +
+          </button>
+        </div>
+
+        {/* Like */}
+        <button className="flex flex-col items-center gap-1 mt-3 group/btn">
+          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm group-hover/btn:bg-black/40 transition-colors">
+            <span className="text-2xl filter drop-shadow-lg transition-transform group-hover/btn:scale-110">❤️</span>
+          </div>
+          <span className="text-white text-[11px] font-bold drop-shadow-md">{video.likes_count}</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1 transition transform hover:scale-110">
-          <div className="bg-gray-800 bg-opacity-50 p-3 rounded-full border border-gray-600 text-white text-xl">
-            ❤️
+        {/* Share/Support */}
+        <button className="flex flex-col items-center gap-1 group/btn">
+          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm group-hover/btn:bg-black/40 transition-colors">
+            <span className="text-2xl filter drop-shadow-lg transition-transform group-hover/btn:scale-110">🎁</span>
           </div>
-          <span className="text-white text-xs font-medium shadow-sm">{video.likes_count}</span>
+          <span className="text-white text-[11px] font-bold drop-shadow-md">Soutenir</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1 transition transform hover:scale-110">
-          <div className="bg-gray-800 bg-opacity-50 p-3 rounded-full border border-gray-600 text-white text-xl">
-            🎁
-          </div>
-          <span className="text-white text-xs font-medium shadow-sm">Soutenir</span>
-        </button>
-
+        {/* Recruiter Action */}
         {user?.role === 'RECRUITER' && (
-          <button onClick={() => setShowContactModal(true)} className="flex flex-col items-center gap-1 transition transform hover:scale-110">
-            <div className="bg-blue-600 p-3 rounded-full text-white text-xl shadow-lg">
-              📩
+          <button 
+            onClick={() => setShowContactModal(true)} 
+            className="flex flex-col items-center gap-1 group/btn mt-2"
+          >
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-teal-400 shadow-[0_0_15px_rgba(37,99,235,0.5)] group-hover/btn:scale-110 transition-transform">
+              <span className="text-2xl">📩</span>
             </div>
-            <span className="text-white text-xs font-medium shadow-sm">Contacter</span>
+            <span className="text-blue-400 text-[11px] font-black drop-shadow-md">Contacter</span>
           </button>
         )}
       </div>
 
       {/* Contact Modal */}
       {showContactModal && (
-        <div className="absolute inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm text-white">
-            <h3 className="text-xl font-bold mb-4">Contacter {video.creator?.first_name}</h3>
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-[#13131a] border border-white/10 rounded-2xl p-6 w-full max-w-sm text-white shadow-2xl">
+            <h3 className="text-xl font-bold mb-4 font-display">Contacter {video.creator?.first_name}</h3>
             
             {contactStatus === 'success' ? (
-              <div className="text-green-400 text-center py-4">Demande de contact envoyée avec succès ! 🎉</div>
+              <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-xl text-center text-sm">
+                Demande de contact envoyée avec succès ! 🎉
+              </div>
             ) : contactStatus === 'error' ? (
-              <div className="text-red-400 text-center py-4">Erreur lors de l'envoi de la demande. Vous avez peut-être déjà une demande en cours.</div>
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-center text-sm">
+                Erreur lors de l'envoi de la demande.
+              </div>
             ) : (
               <>
-                <p className="text-sm text-gray-400 mb-4">
-                  En tant que recruteur vérifié, vous pouvez envoyer une demande de contact.
-                  S'il s'agit d'un mineur, le message sera automatiquement transmis à son parent/tuteur légal (Zero Trust).
-                </p>
+                <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl mb-4">
+                  <p className="text-xs text-yellow-200/80 leading-relaxed">
+                    S'il s'agit d'un mineur, le message sera automatiquement transmis à son tuteur légal (Zero Trust).
+                  </p>
+                </div>
                 <textarea 
-                  className="w-full bg-gray-800 border border-gray-600 rounded-md p-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-500 transition-all"
                   rows={4}
-                  placeholder="Bonjour, je représente..."
+                  placeholder="Bonjour, je représente l'agence..."
                   value={contactMessage}
                   onChange={(e) => setContactMessage(e.target.value)}
                 />
                 <div className="flex gap-3">
                   <button 
                     onClick={() => setShowContactModal(false)}
-                    className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600"
+                    className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-semibold rounded-xl transition-colors"
                   >
                     Annuler
                   </button>
                   <button 
                     onClick={handleContact}
                     disabled={contactStatus === 'loading'}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white text-sm font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all"
                   >
-                    {contactStatus === 'loading' ? 'Envoi...' : 'Envoyer'}
+                    {contactStatus === 'loading' ? 'Envoi...' : 'Envoyer 🚀'}
                   </button>
                 </div>
               </>
@@ -168,12 +201,12 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
 
 export const FeedPage: React.FC = () => {
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+  const { user } = useAuthStore();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ['feed'],
     queryFn: ({ pageParam = 1 }) => videoService.getFeed(pageParam, 10, 'recent'),
     getNextPageParam: (lastPage, allPages) => {
-      // If the last page returned fewer than 10 items, we're at the end
       return lastPage.length === 10 ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
@@ -183,61 +216,152 @@ export const FeedPage: React.FC = () => {
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    // Calculate which video is currently mostly in view
-    // Since each video is exactly the height of the container, index is scrollTop / clientHeight
     const index = Math.round(container.scrollTop / container.clientHeight);
-    if (index !== activeVideoIndex) {
-      setActiveVideoIndex(index);
-    }
+    if (index !== activeVideoIndex) setActiveVideoIndex(index);
 
-    // Trigger fetch next page if we are near the bottom
     const isNearBottom = container.scrollHeight - container.scrollTop <= container.clientHeight * 2;
-    if (isNearBottom && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
+    if (isNearBottom && hasNextPage && !isFetchingNextPage) fetchNextPage();
   };
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const container = document.getElementById('feed-container');
+      if (!container) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        container.scrollBy({ top: container.clientHeight, behavior: 'smooth' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        container.scrollBy({ top: -container.clientHeight, behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   if (isLoading) {
-    return <div className="h-screen w-full flex items-center justify-center bg-black text-white">Chargement du fil d'actualité...</div>;
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-[#0a0a0f] text-white">
+        <div className="flex flex-col items-center gap-4">
+          <img src="/logo.png" alt="Mawhebti" className="w-16 h-16 animate-pulse" />
+          <p className="text-gray-400 font-medium">Chargement des talents...</p>
+        </div>
+      </div>
+    );
   }
 
   if (videos.length === 0) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white">
-        <h2 className="text-2xl font-bold mb-4">Oups !</h2>
-        <p className="text-gray-400 mb-8">Aucune vidéo n'a encore été publiée.</p>
-        <Link to="/dashboard" className="px-4 py-2 bg-blue-600 text-white rounded-md">Retour au Dashboard</Link>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#0a0a0f] text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-violet-900/20 to-blue-900/20" />
+        <div className="relative z-10 text-center">
+          <div className="text-6xl mb-4">🎭</div>
+          <h2 className="text-2xl font-black mb-2 font-display">Aucun talent pour le moment</h2>
+          <p className="text-gray-400 mb-8 max-w-sm mx-auto">Revenez plus tard pour découvrir les nouvelles pépites tunisiennes.</p>
+          <Link to="/" className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl font-semibold transition-all">
+            Retour à l'accueil
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div 
-      className="h-screen w-full sm:max-w-md mx-auto bg-black overflow-y-scroll snap-y snap-mandatory hide-scrollbar relative"
-      onScroll={handleScroll}
-      style={{ scrollBehavior: 'smooth' }}
-    >
-      {/* Top Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex justify-between p-4 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-        <h1 className="text-white text-xl font-bold tracking-wider">Mawhebti</h1>
-        <Link to="/dashboard" className="text-white font-medium text-sm pointer-events-auto hover:underline">
-          Menu
+    <div className="h-screen w-full bg-[#0a0a0f] flex flex-col sm:flex-row overflow-hidden font-sans">
+      
+      {/* Desktop Sidebar (Optional, visible only on large screens to mimic TikTok web layout) */}
+      <div className="hidden lg:flex flex-col w-64 border-r border-white/5 bg-[#0a0a0f] p-4 flex-shrink-0 z-20">
+        <Link to="/" className="flex items-center gap-2 mb-8 px-2 group">
+          <img src="/logo.png" alt="Mawhebti" className="w-8 h-8 group-hover:scale-110 transition-transform" />
+          <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500 font-display">
+            Mawhebti
+          </span>
         </Link>
+        
+        <nav className="space-y-2 flex-1">
+          <Link to="/feed" className="flex items-center gap-3 px-3 py-2.5 text-white font-bold text-sm bg-white/10 rounded-xl border border-white/5">
+            <span className="text-xl">🏠</span> Pour toi
+          </Link>
+          <Link to="/feed" className="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl text-sm font-semibold transition-colors">
+            <span className="text-xl">👥</span> Abonnements
+          </Link>
+        </nav>
+        
+        <div className="pt-4 border-t border-white/5">
+          {user ? (
+            <Link to="/dashboard" className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                {user.email[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user.email}</p>
+                <p className="text-xs text-gray-400">Tableau de bord</p>
+              </div>
+            </Link>
+          ) : (
+            <Link to="/login" className="block w-full py-2.5 text-center bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90 text-white font-bold text-sm rounded-xl shadow-lg transition-all">
+              Connexion
+            </Link>
+          )}
+        </div>
       </div>
 
-      {videos.map((video, idx) => (
-        <VideoPlayer 
-          key={video.id} 
-          video={video} 
-          isActive={idx === activeVideoIndex} 
-        />
-      ))}
-
-      {isFetchingNextPage && (
-        <div className="h-20 w-full flex items-center justify-center text-white bg-black snap-start">
-          Chargement...
+      {/* Main Feed Area */}
+      <div className="flex-1 flex justify-center items-center relative h-full bg-[#0a0a0f] sm:bg-[#111115]">
+        
+        {/* Mobile Header Overlay */}
+        <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent lg:hidden pointer-events-none">
+          <Link to="/" className="flex items-center gap-2 pointer-events-auto">
+            <img src="/logo.png" alt="Mawhebti" className="w-7 h-7 drop-shadow-md" />
+            <span className="text-white text-lg font-black tracking-tight font-display drop-shadow-md">Mawhebti</span>
+          </Link>
+          <Link to={user ? "/dashboard" : "/login"} className="pointer-events-auto">
+            {user ? (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg border border-white/20">
+                {user.email[0].toUpperCase()}
+              </div>
+            ) : (
+              <span className="bg-white text-black px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">Connexion</span>
+            )}
+          </Link>
         </div>
-      )}
+
+        {/* Video Scroller Container */}
+        <div 
+          id="feed-container"
+          className="h-full w-full sm:w-[400px] sm:h-[90%] md:w-[450px] lg:w-[400px] xl:w-[450px] relative bg-black sm:rounded-[2rem] sm:shadow-[0_0_50px_rgba(0,0,0,0.5)] sm:border sm:border-white/10 overflow-y-scroll snap-y snap-mandatory hide-scrollbar"
+          onScroll={handleScroll}
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          {videos.map((video, idx) => (
+            <VideoPlayer 
+              key={video.id} 
+              video={video} 
+              isActive={idx === activeVideoIndex} 
+            />
+          ))}
+
+          {isFetchingNextPage && (
+            <div className="h-20 w-full flex items-center justify-center text-white bg-black snap-start">
+              <svg className="w-6 h-6 animate-spin text-white/50" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            </div>
+          )}
+        </div>
+        
+        {/* Desktop Keyboard Hint */}
+        <div className="hidden xl:flex absolute right-12 bottom-12 flex-col items-center gap-2 text-white/30 pointer-events-none">
+          <div className="flex flex-col gap-1">
+            <kbd className="w-10 h-10 border border-white/20 rounded-lg flex items-center justify-center font-sans text-xl shadow-sm bg-white/5">↑</kbd>
+            <kbd className="w-10 h-10 border border-white/20 rounded-lg flex items-center justify-center font-sans text-xl shadow-sm bg-white/5">↓</kbd>
+          </div>
+          <span className="text-[10px] uppercase tracking-widest font-bold mt-2">Navigation</span>
+        </div>
+
+      </div>
     </div>
   );
 };

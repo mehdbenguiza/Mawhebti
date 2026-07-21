@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
 /* ─────────────────────────────────────────────────────────────
    ANIMATED COUNTER HOOK
@@ -223,6 +224,7 @@ function FeatureCard({ icon, title, description, color, delay, inView }: Feature
    MAIN LANDING PAGE
 ───────────────────────────────────────────────────────────── */
 export const LandingPage: React.FC = () => {
+  const { user } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -399,22 +401,40 @@ export const LandingPage: React.FC = () => {
 
             {/* Desktop CTA buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <Link
-                to="/login"
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
-              >
-                Se connecter
-              </Link>
-              <Link
-                to="/register"
-                className="px-5 py-2 text-sm font-semibold text-white rounded-xl transition-all duration-300 hover:opacity-90 hover:-translate-y-0.5"
-                style={{
-                  background: 'linear-gradient(135deg,#7c3aed,#2563eb)',
-                  boxShadow: '0 0 20px rgba(124,58,237,0.35)',
-                }}
-              >
-                Rejoindre →
-              </Link>
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300 hover:bg-white/10 group"
+                  style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                    {user.email[0].toUpperCase()}
+                  </div>
+                  <div className="flex flex-col items-start mr-2">
+                    <span className="text-sm font-semibold text-white leading-tight">{user.email}</span>
+                    <span className="text-xs text-gray-400 group-hover:text-white transition-colors">Tableau de bord →</span>
+                  </div>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
+                  >
+                    Se connecter
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-5 py-2 text-sm font-semibold text-white rounded-xl transition-all duration-300 hover:opacity-90 hover:-translate-y-0.5"
+                    style={{
+                      background: 'linear-gradient(135deg,#7c3aed,#2563eb)',
+                      boxShadow: '0 0 20px rgba(124,58,237,0.35)',
+                    }}
+                  >
+                    Rejoindre →
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile hamburger */}
@@ -465,21 +485,41 @@ export const LandingPage: React.FC = () => {
               </Link>
             ))}
             <div className="pt-3 flex flex-col gap-2 border-t border-white/5">
-              <Link
-                to="/login"
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 text-sm font-semibold text-gray-200 text-center rounded-xl border border-white/12 hover:bg-white/5 transition-all"
-              >
-                Se connecter
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 text-sm font-bold text-white text-center rounded-xl transition-all"
-                style={{ background: 'linear-gradient(135deg,#7c3aed,#2563eb)' }}
-              >
-                Rejoindre →
-              </Link>
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-white/10"
+                  style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                >
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg,#7c3aed,#2563eb)' }}>
+                    {user.email[0].toUpperCase()}
+                  </div>
+                  <div className="flex flex-col flex-1 text-left">
+                    <span className="text-sm font-semibold text-white leading-tight">{user.email}</span>
+                    <span className="text-xs text-gray-400">Aller au tableau de bord</span>
+                  </div>
+                  <span className="text-gray-500">→</span>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-3 text-sm font-semibold text-gray-200 text-center rounded-xl border border-white/12 hover:bg-white/5 transition-all"
+                  >
+                    Se connecter
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-3 text-sm font-bold text-white text-center rounded-xl transition-all"
+                    style={{ background: 'linear-gradient(135deg,#7c3aed,#2563eb)' }}
+                  >
+                    Rejoindre →
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

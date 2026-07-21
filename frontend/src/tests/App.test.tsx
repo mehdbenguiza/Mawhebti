@@ -106,7 +106,7 @@ import { LoginPage } from '../pages/auth/LoginPage';
 describe('Page LoginPage', () => {
   it('affiche le titre de connexion', () => {
     renderWithProviders(<LoginPage />);
-    expect(screen.getByRole('heading', { name: /connexion à mawhebti/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /bon retour/i })).toBeInTheDocument();
   });
 
   it('affiche les champs email et mot de passe', () => {
@@ -123,7 +123,7 @@ describe('Page LoginPage', () => {
 
   it("affiche le lien vers l'inscription", () => {
     renderWithProviders(<LoginPage />);
-    expect(screen.getByRole('link', { name: /s'inscrire/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /rejoindre mawhebti/i })).toBeInTheDocument();
   });
 });
 
@@ -134,25 +134,25 @@ import { RegisterPage } from '../pages/auth/RegisterPage';
 describe('Page RegisterPage', () => {
   it("affiche le titre d'inscription", () => {
     renderWithProviders(<RegisterPage />);
-    expect(screen.getByRole('heading', { name: /créer un compte/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /rejoignez mawhebti/i })).toBeInTheDocument();
   });
 
-  it('affiche les 4 champs du formulaire', () => {
+  it('affiche les champs du formulaire', () => {
     renderWithProviders(<RegisterPage />);
     // Champ email
     expect(screen.getByRole('textbox', { name: /adresse email/i })).toBeInTheDocument();
-    // Sélecteur de rôle
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    // Sélecteur de rôle n'est plus un combobox mais des boutons
+    expect(screen.getByRole('button', { name: /talent \(majeur\)/i })).toBeInTheDocument();
     // Bouton de soumission
     expect(screen.getByRole('button', { name: /s'inscrire/i })).toBeInTheDocument();
   });
 
   it('propose les 4 rôles dans le sélecteur', () => {
     renderWithProviders(<RegisterPage />);
-    expect(screen.getByRole('option', { name: /talent \(majeur\)/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /talent \(mineur\)/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /parent/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /recruteur/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /talent \(majeur\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /talent \(mineur\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /parent \/ tuteur/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /recruteur/i })).toBeInTheDocument();
   });
 });
 

@@ -1,117 +1,283 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { NavLink, Link, useNavigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 const getNavLinks = (role: string | undefined) => {
   const links = [
-    { to: '/feed', label: 'Explorer', icon: '📱' },
-    { to: 'overview', label: 'Vue d\'ensemble', icon: '🏠' },
-    { to: 'inbox', label: 'Messagerie', icon: '💬' },
-    { to: 'profile', label: 'Mon profil', icon: '👤' },
+    { to: '/feed',    label: 'Explorer',        icon: '🎬', desc: 'Fil d\'actualité' },
+    { to: 'overview', label: 'Vue d\'ensemble',  icon: '⚡', desc: 'Tableau de bord'  },
+    { to: 'inbox',    label: 'Messagerie',       icon: '💬', desc: 'Messages'         },
+    { to: 'profile',  label: 'Mon profil',       icon: '👤', desc: 'Mes informations' },
   ];
   if (role === 'TALENT_MINOR' || role === 'TALENT_MAJOR') {
-    links.push({ to: 'upload', label: 'Publier une vidéo', icon: '🎥' });
+    links.push({ to: 'upload', label: 'Publier une vidéo', icon: '🎥', desc: 'Uploader' });
   }
   return links;
 };
 
-/**
- * Layout principal de l'espace connecté.
- * Contient la Sidebar et le Header communs à tous les dashboards.
- */
+const roleLabel: Record<string, { label: string; color: string; bg: string }> = {
+  TALENT_MINOR: { label: 'Talent · Mineur', color: '#2563eb', bg: 'rgba(37,99,235,0.12)' },
+  TALENT_MAJOR: { label: 'Talent · Majeur', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)' },
+  PARENT:       { label: 'Parent / Tuteur',  color: '#14b8a6', bg: 'rgba(20,184,166,0.12)' },
+  RECRUITER:    { label: 'Recruteur',         color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+  MODERATOR:    { label: 'Modérateur',        color: '#ec4899', bg: 'rgba(236,72,153,0.12)' },
+  ADMIN:        { label: 'Administrateur',    color: '#ef4444', bg: 'rgba(239,68,68,0.12)'  },
+};
+
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   };
 
-  const roleLabel: Record<string, string> = {
-    TALENT_MINOR: 'Talent (Mineur)',
-    TALENT_MAJOR: 'Talent (Majeur)',
-    PARENT: 'Parent / Tuteur',
-    RECRUITER: 'Recruteur',
-    MODERATOR: 'Modérateur',
-    ADMIN: 'Administrateur',
-  };
+  const role = roleLabel[user?.role ?? ''] ?? { label: user?.role ?? '', color: '#6b7280', bg: 'rgba(107,114,128,0.12)' };
+  const initials = (user?.email ?? 'U')[0].toUpperCase();
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Sidebar */}
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ backgroundColor: '#0a0a0f', fontFamily: "'Inter', sans-serif" }}
+    >
+      {/* ═══════════ SIDEBAR ═══════════ */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-16'
-        } bg-gray-900 text-white flex flex-col transition-all duration-300 ease-in-out flex-shrink-0`}
+        className="flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out"
+        style={{
+          width: sidebarOpen ? '240px' : '68px',
+          background: 'rgba(255,255,255,0.03)',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+        }}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
-          {sidebarOpen && (
-            <span className="text-xl font-bold text-blue-400">Mawhebti</span>
-          )}
+        {/* Header: logo + toggle */}
+        <div
+          className="flex items-center h-16 px-3 flex-shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <Link to="/" className="flex items-center gap-2 flex-1 min-w-0 group">
+            <img
+              src="/logo.png"
+              alt="M"
+              className="w-8 h-8 object-contain flex-shrink-0 transition-transform group-hover:scale-110"
+              style={{ filter: 'drop-shadow(0 0 6px rgba(124,58,237,0.5))' }}
+            />
+            {sidebarOpen && (
+              <span
+                className="font-black text-base truncate"
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  background: 'linear-gradient(135deg,#7c3aed,#2563eb)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Mawhebti
+              </span>
+            )}
+          </Link>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 rounded-lg hover:bg-gray-700 transition-colors"
+            className="flex-shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/8 transition-all"
             aria-label="Toggle sidebar"
           >
-            {sidebarOpen ? '◀' : '▶'}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d={sidebarOpen ? 'M11 19l-7-7 7-7m8 14l-7-7 7-7' : 'M13 5l7 7-7 7M5 5l7 7-7 7'} />
+            </svg>
           </button>
         </div>
 
-        {/* Navigation links */}
-        <nav className="flex-1 py-4 space-y-1 px-2">
+        {/* Nav links */}
+        <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+          {/* Home button */}
+          <Link
+            to="/"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white transition-all group mb-3"
+            style={{ background: 'transparent' }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <span className="text-base flex-shrink-0">🏠</span>
+            {sidebarOpen && <span className="truncate">Accueil</span>}
+          </Link>
+
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '4px 8px' }} />
+
           {getNavLinks(user?.role).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive ? 'text-white' : 'text-gray-400 hover:text-white'
                 }`
               }
+              style={({ isActive }) => isActive ? {
+                background: 'linear-gradient(135deg, rgba(124,58,237,0.25), rgba(37,99,235,0.2))',
+                border: '1px solid rgba(124,58,237,0.3)',
+                boxShadow: '0 0 20px rgba(124,58,237,0.1)',
+              } : {}}
             >
-              <span className="text-lg">{link.icon}</span>
-              {sidebarOpen && <span>{link.label}</span>}
+              <span className="text-base flex-shrink-0">{link.icon}</span>
+              {sidebarOpen && (
+                <div className="flex-1 min-w-0">
+                  <span className="truncate block">{link.label}</span>
+                </div>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        {/* User info + Logout */}
-        <div className="border-t border-gray-700 p-4">
-          {sidebarOpen && (
-            <div className="mb-3">
-              <p className="text-sm font-medium text-white truncate">{user?.email}</p>
-              <p className="text-xs text-gray-400">{roleLabel[user?.role ?? ''] ?? user?.role}</p>
+        {/* User info + logout */}
+        <div
+          className="flex-shrink-0 p-3"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          {sidebarOpen ? (
+            <div
+              className="p-3 rounded-xl mb-2"
+              style={{ background: role.bg, border: `1px solid ${role.color}30` }}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                  style={{ background: `linear-gradient(135deg, ${role.color}, ${role.color}99)` }}
+                >
+                  {initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-xs font-semibold truncate">{user?.email}</p>
+                  <p className="text-xs font-medium mt-0.5" style={{ color: role.color }}>{role.label}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white mx-auto mb-2"
+              style={{ background: `linear-gradient(135deg, ${role.color}, ${role.color}99)` }}
+            >
+              {initials}
             </div>
           )}
+
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/30 rounded-lg transition-colors"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-red-400 transition-all duration-200"
+            style={{ background: 'transparent' }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
-            <span>🚪</span>
-            {sidebarOpen && <span>Se déconnecter</span>}
+            <span className="flex-shrink-0">🚪</span>
+            {sidebarOpen && <span>Déconnexion</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ═══════════ MAIN ═══════════ */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-6 shadow-sm">
-          <h1 className="text-lg font-semibold text-gray-800">
-            Bienvenue sur votre espace {roleLabel[user?.role ?? ''] ?? ''}
-          </h1>
+
+        {/* Topbar */}
+        <header
+          className="h-14 flex items-center justify-between px-6 flex-shrink-0"
+          style={{
+            background: 'rgba(255,255,255,0.02)',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="h-5 w-0.5 rounded-full"
+              style={{ background: 'linear-gradient(to bottom, #7c3aed, #2563eb)' }}
+            />
+            <span className="text-white text-sm font-semibold">
+              Espace {role.label}
+            </span>
+          </div>
+
+          {/* Right: back to home + user chip */}
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition-all"
+              style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+            >
+              ← Accueil
+            </Link>
+
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+              style={{ background: role.bg, border: `1px solid ${role.color}30` }}
+            >
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: `linear-gradient(135deg, ${role.color}, ${role.color}99)` }}
+              >
+                {initials}
+              </div>
+              <span className="text-xs font-medium text-white truncate max-w-32 hidden sm:block">
+                {user?.email}
+              </span>
+            </div>
+          </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ background: 'rgba(255,255,255,0.01)' }}
+        >
           <Outlet />
         </main>
       </div>
+
+      {/* ═══════════ Logout confirm modal ═══════════ */}
+      {showLogoutConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div
+            className="rounded-2xl p-8 max-w-sm w-full mx-4"
+            style={{
+              background: 'rgba(15,15,25,0.95)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 25px 80px rgba(0,0,0,0.6)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-4xl text-center mb-4">👋</div>
+            <h3 className="text-white font-bold text-xl text-center mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              Vous déconnecter ?
+            </h3>
+            <p className="text-gray-400 text-sm text-center mb-6">
+              Vous serez redirigé vers la page d'accueil.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition-all"
+                style={{ border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)' }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 0 20px rgba(239,68,68,0.3)' }}
+              >
+                Se déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

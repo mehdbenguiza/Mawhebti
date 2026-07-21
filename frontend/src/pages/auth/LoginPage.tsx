@@ -128,12 +128,13 @@ export const LoginPage: React.FC = () => {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                   Adresse email
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-base">✉️</span>
                   <input
+                    id="email"
                     type="email"
                     {...register('email')}
                     placeholder="vous@exemple.com"
@@ -163,12 +164,13 @@ export const LoginPage: React.FC = () => {
 
               {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                   Mot de passe
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-base">🔒</span>
                   <input
+                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     {...register('password')}
                     placeholder="••••••••"
