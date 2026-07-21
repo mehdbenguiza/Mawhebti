@@ -29,8 +29,8 @@ class Profile(Base):
     last_name = Column(String(100), nullable=True)
     bio = Column(Text, nullable=True)
     date_of_birth = Column(Date, nullable=True)      # Stocké, jamais exposé publiquement
-    city = Column(String(100), nullable=True)
-    country = Column(String(100), nullable=True)
+    city = Column(String(100), nullable=True, index=True)
+    country = Column(String(100), nullable=True, index=True)
 
     # Avatar: stocke uniquement un chemin relatif (ex: "uploads/avatars/uuid.jpg")
     # Jamais de données base64 en base !

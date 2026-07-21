@@ -8,6 +8,7 @@ from app.core.security import SECRET_KEY, ALGORITHM
 from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
@@ -36,6 +37,15 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         raise HTTPException(status_code=403, detail="Votre compte a été bloqué.")
         
     return user
+
+
+def get_optional_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme_optional)):
+    if not token:
+        return None
+    try:
+        return get_current_user(db, token)
+    except HTTPException:
+        return None
 
 
 def require_trust_level(level: int):

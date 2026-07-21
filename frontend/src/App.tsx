@@ -12,6 +12,8 @@ import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { FeedPage } from './pages/feed/FeedPage';
 import { InboxPage } from './pages/dashboard/InboxPage';
+import { ExplorePage } from './pages/explore/ExplorePage';
+import { PublicProfilePage } from './pages/profile/PublicProfilePage';
 import LandingPage from './pages/LandingPage';
 import { useAuthStore } from './store/authStore';
 
@@ -49,6 +51,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/feed" element={<FeedPage />} />
+          <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/talents/:id" element={<PublicProfilePage />} />
 
           {/* Dashboard Talent (Majeur et Mineur) */}
           <Route

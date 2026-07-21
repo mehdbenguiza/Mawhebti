@@ -63,3 +63,11 @@ class ProfileResponsePrivate(ProfileResponse):
     date_of_birth: Optional[date] = None
 
     model_config = {"from_attributes": True}
+
+
+class PublicProfileResponse(ProfileResponse):
+    """
+    Réponse publique : utilisée pour l'exploration et la découverte par les autres utilisateurs.
+    Hérite de ProfileResponse qui exclut explicitement date_of_birth et user_id.
+    """
+    model_config = {"from_attributes": True}

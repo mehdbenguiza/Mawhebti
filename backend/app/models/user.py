@@ -37,8 +37,8 @@ class User(Base):
     email = Column(String(254), unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(Enum(UserRole), nullable=False)
-    status = Column(Enum(UserStatus), nullable=False, default=UserStatus.PENDING)
-    is_verified = Column(Boolean, default=False)
+    status = Column(Enum(UserStatus), nullable=False, default=UserStatus.PENDING, index=True)
+    is_verified = Column(Boolean, default=False, index=True)
 
     email_verified_at = Column(DateTime(timezone=True), nullable=True)
     last_login_at = Column(DateTime(timezone=True), nullable=True)

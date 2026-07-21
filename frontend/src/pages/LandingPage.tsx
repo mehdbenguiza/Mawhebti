@@ -381,7 +381,8 @@ export const LandingPage: React.FC = () => {
             <div className="hidden md:flex items-center gap-8">
               {[
                 { label: 'Accueil', to: '/' },
-                { label: 'Vidéos Populaires', to: '/feed' },
+                { label: 'Explorer', to: '/explore' },
+                { label: 'Vidéos', to: '/feed' },
                 { label: 'Recruteurs', to: '/register' },
                 { label: 'À propos', to: '#about' },
               ].map(({ label, to }) => (
@@ -471,7 +472,8 @@ export const LandingPage: React.FC = () => {
           <div className="px-4 pb-5 pt-3 space-y-1.5 border-t border-white/5">
             {[
               { label: 'Accueil', to: '/' },
-              { label: 'Vidéos Populaires', to: '/feed' },
+              { label: 'Explorer', to: '/explore' },
+              { label: 'Vidéos', to: '/feed' },
               { label: 'Recruteurs', to: '/register' },
               { label: 'À propos', to: '#about' },
             ].map(({ label, to }) => (
