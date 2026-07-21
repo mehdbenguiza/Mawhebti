@@ -13,6 +13,10 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
   const [contactMessage, setContactMessage] = useState('');
   const [contactStatus, setContactStatus] = useState<'idle'|'loading'|'success'|'error'>('idle');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [volume, setVolume] = useState(1);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
   const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
 
   const handleContact = async () => {
@@ -36,6 +40,12 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
     }
   }, [isActive]);
 
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+    }
+  }, [volume]);
+
   const togglePlay = (e: React.MouseEvent) => {
     e.preventDefault();
     if (videoRef.current) {
@@ -46,6 +56,14 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         videoRef.current.pause();
         setIsPlaying(false);
       }
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = Number(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      setProgress(time);
     }
   };
 
@@ -67,9 +85,35 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         className="relative z-10 w-full h-full object-cover sm:object-contain sm:max-h-full cursor-pointer"
         loop
         playsInline
-        muted={true}
+        muted={isMuted}
         onClick={togglePlay}
+        onTimeUpdate={(e) => setProgress(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
       />
+
+      {/* Top Controls: Volume */}
+      <div className="absolute top-4 right-4 z-40 flex items-center gap-2 group/volume">
+        {/* Volume Slider (appears on hover) */}
+        <div className="w-0 overflow-hidden group-hover/volume:w-24 transition-all duration-300 ease-out flex items-center bg-black/40 backdrop-blur-md rounded-full px-0 group-hover/volume:px-3 h-8">
+          <input 
+            type="range" 
+            min="0" max="1" step="0.05" 
+            value={isMuted ? 0 : volume} 
+            onChange={(e) => {
+              setVolume(Number(e.target.value));
+              if (Number(e.target.value) > 0) setIsMuted(false);
+              else setIsMuted(true);
+            }}
+            className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer"
+          />
+        </div>
+        <button 
+          onClick={() => setIsMuted(!isMuted)}
+          className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/60 transition-colors"
+        >
+          {isMuted || volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊'}
+        </button>
+      </div>
       
       {/* Play/Pause indicator animation on click */}
       {!isPlaying && (
@@ -81,7 +125,7 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
       )}
       
       {/* Overlay: Bottom Left (Info) */}
-      <div className="absolute bottom-4 left-4 right-20 text-white z-30 pointer-events-none" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+      <div className="absolute bottom-10 left-4 right-20 text-white z-30 pointer-events-none" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
         <h3 className="text-lg font-bold flex items-center gap-1.5 mb-1.5">
           @{video.creator?.first_name || 'Talent'} {video.creator?.last_name || ''}
           {video.creator?.trust_level >= 1 && <span className="text-xs bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded-full border border-teal-500/30 backdrop-blur-md">Vérifié ✓</span>}
@@ -145,6 +189,21 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
             <span className="text-blue-400 text-[11px] font-black drop-shadow-md">Contacter</span>
           </button>
         )}
+      </div>
+
+      {/* Progress Bar (Bottom) */}
+      <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20 z-40 group/progress cursor-pointer overflow-hidden sm:rounded-b-2xl">
+        <div 
+          className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-100 ease-linear"
+          style={{ width: `${(progress / (duration || 1)) * 100}%` }}
+        />
+        <input 
+          type="range" 
+          min="0" max={duration || 100} step="0.1"
+          value={progress}
+          onChange={handleSeek}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        />
       </div>
 
       {/* Contact Modal */}

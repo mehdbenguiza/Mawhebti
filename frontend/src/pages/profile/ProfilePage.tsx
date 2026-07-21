@@ -3,8 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
 import { profileService } from '../../services/profile.service';
 
 const profileSchema = z.object({
@@ -14,7 +12,7 @@ const profileSchema = z.object({
   date_of_birth: z.string().optional().or(z.literal('')),
   city: z.string().max(100).optional().or(z.literal('')),
   country: z.string().max(100).optional().or(z.literal('')),
-  skills: z.string().optional(), // Entrée en texte libre, séparée par des virgules
+  skills: z.string().optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -26,7 +24,6 @@ export const ProfilePage: React.FC = () => {
     queryKey: ['profile', 'me'],
     queryFn: profileService.getMyProfile,
     retry: (failureCount, error: any) => {
-      // Ne pas retry sur les 404 (profil pas encore créé)
       if (error?.response?.status === 404) return false;
       return failureCount < 2;
     },
@@ -48,7 +45,6 @@ export const ProfilePage: React.FC = () => {
     resolver: zodResolver(profileSchema),
   });
 
-  // Pré-rempli le formulaire dès que le profil est chargé
   useEffect(() => {
     if (profile) {
       reset({
@@ -81,83 +77,134 @@ export const ProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      <div className="flex items-center justify-center py-20">
+        <svg className="animate-spin h-8 w-8 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6 text-white font-sans">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Mon profil</h2>
-        <p className="text-gray-600 mt-1">Ces informations seront visibles par les recruteurs.</p>
+        <h2 className="text-3xl font-black text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>Mon profil</h2>
+        <p className="text-gray-400 mt-2 text-sm">Ces informations seront visibles par les recruteurs et sur votre page.</p>
       </div>
 
       {mutation.isSuccess && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-          ✅ Profil mis à jour avec succès !
+        <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-xl text-sm font-medium flex items-center gap-3 shadow-lg">
+          <span>✅</span> Profil mis à jour avec succès !
         </div>
       )}
       {mutation.isError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          ❌ Une erreur est survenue. Veuillez réessayer.
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm font-medium flex items-center gap-3 shadow-lg">
+          <span>❌</span> Une erreur est survenue. Veuillez réessayer.
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-lg border border-gray-200 p-6 space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="Prénom" {...register('first_name')} error={errors.first_name?.message} />
-          <Input label="Nom" {...register('last_name')} error={errors.last_name?.message} />
-        </div>
+      <div className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl border border-white/10 p-6 sm:p-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Prénom</label>
+              <input
+                {...register('first_name')}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white placeholder-gray-600 text-sm"
+                placeholder="Votre prénom"
+              />
+              {errors.first_name && <p className="mt-1 text-xs text-red-400">{errors.first_name.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Nom</label>
+              <input
+                {...register('last_name')}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white placeholder-gray-600 text-sm"
+                placeholder="Votre nom"
+              />
+              {errors.last_name && <p className="mt-1 text-xs text-red-400">{errors.last_name.message}</p>}
+            </div>
+          </div>
 
-        {/* Bio */}
-        <div className="text-left">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-          <textarea
-            {...register('bio')}
-            rows={4}
-            placeholder="Parlez-nous de vous, de votre talent..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm resize-none"
-          />
-          {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>}
-        </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">Bio</label>
+            <textarea
+              {...register('bio')}
+              rows={4}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white placeholder-gray-600 text-sm resize-y"
+              placeholder="Parlez-nous de vous, de votre parcours, de votre passion..."
+            />
+            {errors.bio && <p className="mt-1 text-xs text-red-400">{errors.bio.message}</p>}
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="Ville" {...register('city')} error={errors.city?.message} />
-          <Input label="Pays" {...register('country')} error={errors.country?.message} />
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Ville</label>
+              <input
+                {...register('city')}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white placeholder-gray-600 text-sm"
+                placeholder="Tunis, Sfax, Sousse..."
+              />
+              {errors.city && <p className="mt-1 text-xs text-red-400">{errors.city.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Pays</label>
+              <input
+                {...register('country')}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white placeholder-gray-600 text-sm"
+                placeholder="Tunisie"
+              />
+              {errors.country && <p className="mt-1 text-xs text-red-400">{errors.country.message}</p>}
+            </div>
+          </div>
 
-        <Input
-          label="Date de naissance"
-          type="date"
-          {...register('date_of_birth')}
-          error={errors.date_of_birth?.message}
-        />
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">
+              Date de naissance
+            </label>
+            <input
+              type="date"
+              {...register('date_of_birth')}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white text-sm"
+              style={{ colorScheme: 'dark' }}
+            />
+            {errors.date_of_birth && <p className="mt-1 text-xs text-red-400">{errors.date_of_birth.message}</p>}
+          </div>
 
-        <div className="text-left">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Compétences / Talents
-            <span className="text-gray-400 font-normal ml-1">(séparées par des virgules, max 20)</span>
-          </label>
-          <input
-            {...register('skills')}
-            type="text"
-            placeholder="Ex: Chant, Piano, Danse contemporaine"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
-          />
-        </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+              Compétences / Talents
+              <span className="text-gray-500 font-normal text-xs">(séparées par des virgules)</span>
+            </label>
+            <input
+              {...register('skills')}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white placeholder-gray-600 text-sm"
+              placeholder="Ex: Chant, Piano classique, Danse contemporaine"
+            />
+          </div>
 
-        <div className="flex justify-end pt-2">
-          <Button
-            type="submit"
-            isLoading={isSubmitting || mutation.isPending}
-            disabled={!isDirty && !!profile}
-          >
-            Enregistrer les modifications
-          </Button>
-        </div>
-      </form>
+          <div className="flex justify-end pt-6 border-t border-white/10">
+            <button
+              type="submit"
+              disabled={(!isDirty && !!profile) || isSubmitting || mutation.isPending}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 shadow-[0_0_20px_rgba(124,58,237,0.3)] text-white rounded-xl font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2 text-sm hover:scale-[1.02] active:scale-95"
+            >
+              {(isSubmitting || mutation.isPending) ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Enregistrement...
+                </>
+              ) : (
+                'Enregistrer les modifications'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
