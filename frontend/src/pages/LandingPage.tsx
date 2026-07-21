@@ -353,9 +353,15 @@ export const LandingPage: React.FC = () => {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0 group">
+            <Link to="/" className="flex-shrink-0 group flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Mawhebti"
+                className="h-9 w-9 object-contain transition-transform duration-200 group-hover:scale-110"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(124,58,237,0.4))' }}
+              />
               <span
-                className="text-2xl font-black tracking-tight transition-opacity duration-200 group-hover:opacity-80"
+                className="text-xl font-black tracking-tight transition-opacity duration-200 group-hover:opacity-80 hidden sm:block"
                 style={{
                   fontFamily: "'Outfit', sans-serif",
                   background: 'linear-gradient(135deg,#7c3aed,#2563eb)',
@@ -367,6 +373,7 @@ export const LandingPage: React.FC = () => {
                 Mawhebti
               </span>
             </Link>
+
 
             {/* Desktop nav links */}
             <div className="hidden md:flex items-center gap-8">
@@ -545,7 +552,7 @@ export const LandingPage: React.FC = () => {
                 }}
               >
                 <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                Plateforme #1 des jeunes talents en France
+                🇹🇳 Plateforme #1 des jeunes talents en Tunisie
               </div>
 
               {/* Main headline */}
@@ -657,7 +664,7 @@ export const LandingPage: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-xs font-bold truncate">Sofia Benali</p>
-                        <p className="text-gray-400 text-xs">Chanteuse • Paris</p>
+                        <p className="text-gray-400 text-xs">Chanteuse • Tunis</p>
                       </div>
                       <span
                         className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
@@ -702,7 +709,7 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div className="p-3">
                     <p className="text-white text-xs font-bold">Karim Ouali</p>
-                    <p className="text-gray-400 text-xs">Danseur • Lyon</p>
+                    <p className="text-gray-400 text-xs">Danseur • Sfax</p>
                   </div>
                 </div>
               </div>
@@ -735,7 +742,7 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div className="p-3">
                     <p className="text-white text-xs font-bold">Lina Meziani</p>
-                    <p className="text-gray-400 text-xs">Footballeuse • Nice</p>
+                    <p className="text-gray-400 text-xs">Footballeuse • Sousse</p>
                   </div>
                 </div>
               </div>
