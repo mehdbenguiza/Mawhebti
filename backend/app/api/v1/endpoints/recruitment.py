@@ -5,7 +5,7 @@ from uuid import UUID
 from app.core.database import get_db
 from app.services.contact_service import ContactService
 from app.services.conversation_service import ConversationService
-from app.models.recruitment import RecruitmentRequest, RecruitmentRequestStatus
+from app.models.recruitment import RecruitmentRequest, RecruitmentRequestStatus, SavedTalent
 
 router = APIRouter()
 
@@ -102,5 +102,21 @@ def get_recruitment_requests(user_id: UUID, db: Session = Depends(get_db)):
             "i_am_sender": str(r.recruiter_id) == str(user_id),
             "recruiter": {"id": str(r.recruiter_id), "name": recruiter_name},
             "talent": {"id": str(r.subject_talent_id), "name": talent_name},
-        })
     return result
+
+@router.post("/saved-talents/{talent_id}/toggle")
+def toggle_save_talent(talent_id: UUID, recruiter_id: UUID, db: Session = Depends(get_db)):
+    """
+    Sauvegarder ou retirer un talent de ses favoris.
+    """
+    saved = db.query(SavedTalent).filter(SavedTalent.recruiter_id == recruiter_id, SavedTalent.talent_id == talent_id).first()
+    
+    if saved:
+        db.delete(saved)
+        db.commit()
+        return {"action": "removed"}
+    else:
+        new_saved = SavedTalent(recruiter_id=recruiter_id, talent_id=talent_id)
+        db.add(new_saved)
+        db.commit()
+        return {"action": "saved"}

@@ -59,4 +59,12 @@ export const recruitmentService = {
     );
     return response.data;
   },
+
+  toggleSavedTalent: async (talentId: string) => {
+    const recruiterId = getCurrentUserId();
+    const response = await axios.post(
+      `${API_URL}/recruitment/saved-talents/${talentId}/toggle?recruiter_id=${recruiterId}`
+    );
+    return response.data;
+  },
 };

@@ -31,3 +31,16 @@ class VideoFeedResponse(VideoResponse):
     creator: CreatorInfo
     
     model_config = ConfigDict(from_attributes=True)
+
+class VideoViewCreate(BaseModel):
+    session_id: str
+    watched_seconds: int = 0
+    completed: bool = False
+
+class VideoReportCreate(BaseModel):
+    reason: str
+
+class VideoStatsResponse(BaseModel):
+    views: int
+    likes: int
+    liked: bool

@@ -17,7 +17,27 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
   const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  // Nouvelles intéractions
+  const [likesCount, setLikesCount] = useState(video.likes_count);
+  const [viewsCount, setViewsCount] = useState(video.views_count);
+  const [isLiked, setIsLiked] = useState(false);
+  const [hasViewed, setHasViewed] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('contenu inapproprié');
+  const [reportStatus, setReportStatus] = useState<'idle'|'loading'|'success'>('idle');
+
   const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
+
+  const getSessionId = () => {
+    let sid = sessionStorage.getItem('mawhebti_session_id');
+    if (!sid) {
+      sid = Math.random().toString(36).substring(2, 15);
+      sessionStorage.setItem('mawhebti_session_id', sid);
+    }
+    return sid;
+  };
 
   const handleContact = async () => {
     try {
@@ -34,11 +54,28 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
   useEffect(() => {
     if (isActive && videoRef.current) {
       videoRef.current.play().then(() => setIsPlaying(true)).catch(e => console.log('Auto-play prevented', e));
+      
+      // Fetch fresh stats when video becomes active
+      videoService.getVideoStats(video.id).then(stats => {
+        setLikesCount(stats.likes);
+        setViewsCount(stats.views);
+        setIsLiked(stats.liked);
+      }).catch(e => console.error("Stats fetch error", e));
+
     } else if (videoRef.current) {
       videoRef.current.pause();
       setIsPlaying(false);
     }
-  }, [isActive]);
+  }, [isActive, video.id]);
+
+  useEffect(() => {
+    if (progress > 3 && !hasViewed) {
+      setHasViewed(true);
+      videoService.viewVideo(video.id, getSessionId(), Math.floor(progress), false)
+        .then(res => setViewsCount(res.views_count))
+        .catch(e => console.error("View track error", e));
+    }
+  }, [progress, hasViewed, video.id]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -56,6 +93,65 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         videoRef.current.pause();
         setIsPlaying(false);
       }
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) {
+      alert("Veuillez vous connecter pour aimer cette vidéo.");
+      return;
+    }
+    const previousLiked = isLiked;
+    const previousCount = likesCount;
+    
+    setIsLiked(!isLiked);
+    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+    
+    try {
+      const res = await videoService.likeVideo(video.id);
+      setLikesCount(res.likes_count);
+      setIsLiked(res.action === 'liked');
+    } catch (e) {
+      setIsLiked(previousLiked);
+      setLikesCount(previousCount);
+      console.error(e);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const url = `${window.location.origin}/feed`; 
+      await navigator.clipboard.writeText(url);
+      alert("Lien copié dans le presse-papier !");
+    } catch (e) {
+      console.error("Share error", e);
+    }
+  };
+
+  const handleReport = async () => {
+    try {
+      setReportStatus('loading');
+      await videoService.reportVideo(video.id, reportReason);
+      setReportStatus('success');
+      setTimeout(() => setShowReportModal(false), 2000);
+    } catch (e) {
+      console.error(e);
+      setReportStatus('idle');
+      alert("Erreur lors du signalement.");
+    }
+  };
+
+  const handleSaveTalent = async () => {
+    if (!user || user.role !== 'RECRUITER') return;
+    const previousSaved = isSaved;
+    setIsSaved(!isSaved);
+    try {
+      const res = await recruitmentService.toggleSavedTalent(video.creator.id);
+      setIsSaved(res.action === 'saved');
+    } catch (e) {
+      setIsSaved(previousSaved);
+      console.error(e);
+      alert("Erreur lors de la sauvegarde du talent.");
     }
   };
 
@@ -162,33 +258,61 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         </div>
 
         {/* Like */}
-        <button className="flex flex-col items-center gap-1 mt-3 group/btn">
+        <button onClick={handleLike} className="flex flex-col items-center gap-1 mt-3 group/btn">
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm group-hover/btn:bg-black/40 transition-colors">
-            <span className="text-2xl filter drop-shadow-lg transition-transform group-hover/btn:scale-110">❤️</span>
+            <span className={`text-2xl filter drop-shadow-lg transition-transform group-hover/btn:scale-110 ${isLiked ? 'text-red-500 scale-110' : 'text-white'}`}>
+              {isLiked ? '❤️' : '🤍'}
+            </span>
           </div>
-          <span className="text-white text-[11px] font-bold drop-shadow-md">{video.likes_count}</span>
+          <span className="text-white text-[11px] font-bold drop-shadow-md">{likesCount}</span>
         </button>
 
-        {/* Share/Support */}
-        <button className="flex flex-col items-center gap-1 group/btn">
+        {/* Share */}
+        <button onClick={handleShare} className="flex flex-col items-center gap-1 mt-2 group/btn">
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm group-hover/btn:bg-black/40 transition-colors">
-            <span className="text-2xl filter drop-shadow-lg transition-transform group-hover/btn:scale-110">🎁</span>
+            <span className="text-2xl filter drop-shadow-lg transition-transform group-hover/btn:scale-110">↗️</span>
           </div>
-          <span className="text-white text-[11px] font-bold drop-shadow-md">Soutenir</span>
+          <span className="text-white text-[11px] font-bold drop-shadow-md">Partager</span>
         </button>
+        
+        {/* Views Display (Decorative in TikTok style, but useful here) */}
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <span className="text-[10px] text-gray-300 font-semibold drop-shadow-md">👁️ {viewsCount}</span>
+        </div>
 
-        {/* Recruiter Action */}
+        {/* Recruiter Actions */}
         {user?.role === 'RECRUITER' && (
-          <button 
-            onClick={() => setShowContactModal(true)} 
-            className="flex flex-col items-center gap-1 group/btn mt-2"
-          >
-            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-teal-400 shadow-[0_0_15px_rgba(37,99,235,0.5)] group-hover/btn:scale-110 transition-transform">
-              <span className="text-2xl">📩</span>
-            </div>
-            <span className="text-blue-400 text-[11px] font-black drop-shadow-md">Contacter</span>
-          </button>
+          <>
+            <button 
+              onClick={handleSaveTalent} 
+              className="flex flex-col items-center gap-1 group/btn mt-1"
+            >
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm group-hover/btn:bg-black/40 transition-colors">
+                <span className={`text-2xl filter drop-shadow-lg transition-transform group-hover/btn:scale-110 ${isSaved ? 'text-yellow-400 scale-110' : 'text-white'}`}>
+                  {isSaved ? '⭐' : '☆'}
+                </span>
+              </div>
+              <span className="text-[11px] font-bold drop-shadow-md text-white">{isSaved ? 'Sauvegardé' : 'Favoris'}</span>
+            </button>
+            
+            <button 
+              onClick={() => setShowContactModal(true)} 
+              className="flex flex-col items-center gap-1 group/btn mt-2"
+            >
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-teal-400 shadow-[0_0_15px_rgba(37,99,235,0.5)] group-hover/btn:scale-110 transition-transform">
+                <span className="text-2xl">📩</span>
+              </div>
+              <span className="text-blue-400 text-[11px] font-black drop-shadow-md">Contacter</span>
+            </button>
+          </>
         )}
+
+        {/* Report */}
+        <button onClick={() => setShowReportModal(true)} className="flex flex-col items-center gap-1 mt-4 group/btn opacity-40 hover:opacity-100 transition-opacity">
+          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm text-sm">
+            🚩
+          </div>
+        </button>
       </div>
 
       {/* Progress Bar (Bottom) */}
@@ -247,6 +371,55 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
                     className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white text-sm font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all"
                   >
                     {contactStatus === 'loading' ? 'Envoi...' : 'Envoyer 🚀'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-[#13131a] border border-white/10 rounded-2xl p-6 w-full max-w-sm text-white shadow-2xl">
+            <h3 className="text-xl font-bold mb-4 text-red-500 font-display">Signaler la vidéo</h3>
+            
+            {reportStatus === 'success' ? (
+              <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-xl text-center text-sm">
+                Signalement reçu. Merci pour votre aide !
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-300 mb-4">Pourquoi signalez-vous cette vidéo ?</p>
+                <div className="flex flex-col gap-2 mb-6">
+                  {['contenu inapproprié', 'spam', 'harcèlement', 'autre'].map(reason => (
+                    <label key={reason} className="flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:bg-white/5 cursor-pointer transition-colors">
+                      <input 
+                        type="radio" 
+                        name="reportReason" 
+                        value={reason} 
+                        checked={reportReason === reason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        className="accent-red-500 w-4 h-4"
+                      />
+                      <span className="text-sm capitalize">{reason}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setShowReportModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    onClick={handleReport}
+                    disabled={reportStatus === 'loading'}
+                    className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all"
+                  >
+                    {reportStatus === 'loading' ? 'Envoi...' : 'Signaler'}
                   </button>
                 </div>
               </>

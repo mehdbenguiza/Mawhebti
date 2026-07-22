@@ -38,4 +38,28 @@ export const videoService = {
     const response = await api.get(`/videos/feed?page=${page}&limit=${limit}&sort_by=${sortBy}`);
     return response.data;
   },
+
+  likeVideo: async (videoId: string): Promise<{action: string, likes_count: number}> => {
+    const response = await api.post(`/videos/${videoId}/like`);
+    return response.data;
+  },
+
+  viewVideo: async (videoId: string, sessionId: string, watchedSeconds: number, completed: boolean): Promise<{status: string, views_count: number}> => {
+    const response = await api.post(`/videos/${videoId}/view`, {
+      session_id: sessionId,
+      watched_seconds: watchedSeconds,
+      completed: completed
+    });
+    return response.data;
+  },
+
+  reportVideo: async (videoId: string, reason: string): Promise<{status: string}> => {
+    const response = await api.post(`/videos/${videoId}/report`, { reason });
+    return response.data;
+  },
+
+  getVideoStats: async (videoId: string): Promise<{views: number, likes: number, liked: boolean}> => {
+    const response = await api.get(`/videos/${videoId}/stats`);
+    return response.data;
+  },
 };

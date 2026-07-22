@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
-from app.api.dependencies import get_current_user
+from app.api.dependencies import get_current_user, get_optional_current_user
 from app.models.user import User, UserRole
 from app.models.video import Video, VideoStatus
-from app.schemas.video import VideoResponse
+from app.schemas.video import VideoResponse, VideoViewCreate, VideoReportCreate, VideoStatsResponse
 from app.services.video_service import VideoService
 from app.models.parent_child import ParentChildLink, LinkStatus
+from app.models.video import VideoLike, VideoView, VideoReport
 
 router = APIRouter()
 
@@ -140,3 +141,108 @@ def get_video_feed(
         feed.append(video_dict)
         
     return feed
+
+@router.post("/{video_id}/like")
+def toggle_like_video(
+    video_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Vidéo introuvable")
+        
+    like = db.query(VideoLike).filter(VideoLike.video_id == video.id, VideoLike.user_id == current_user.id).first()
+    
+    if like:
+        db.delete(like)
+        video.likes_count = max(0, video.likes_count - 1)
+        action = "unliked"
+    else:
+        new_like = VideoLike(user_id=current_user.id, video_id=video.id)
+        db.add(new_like)
+        video.likes_count += 1
+        action = "liked"
+        
+    db.commit()
+    return {"action": action, "likes_count": video.likes_count}
+
+@router.post("/{video_id}/view")
+def register_video_view(
+    video_id: str,
+    view_data: VideoViewCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Vidéo introuvable")
+
+    # Anti-spam : vérifier si la session/user a déjà vu cette vidéo
+    query = db.query(VideoView).filter(VideoView.video_id == video.id)
+    if current_user:
+        query = query.filter(VideoView.user_id == current_user.id)
+    else:
+        query = query.filter(VideoView.session_id == view_data.session_id)
+        
+    existing_view = query.first()
+    
+    if not existing_view:
+        new_view = VideoView(
+            video_id=video.id,
+            user_id=current_user.id if current_user else None,
+            session_id=view_data.session_id,
+            watched_seconds=view_data.watched_seconds,
+            completed=view_data.completed
+        )
+        db.add(new_view)
+        video.views_count += 1
+        db.commit()
+        return {"status": "recorded", "views_count": video.views_count}
+    else:
+        if view_data.watched_seconds > existing_view.watched_seconds:
+            existing_view.watched_seconds = view_data.watched_seconds
+            existing_view.completed = existing_view.completed or view_data.completed
+            db.commit()
+        return {"status": "updated", "views_count": video.views_count}
+
+@router.post("/{video_id}/report")
+def report_video(
+    video_id: str,
+    report_data: VideoReportCreate,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Vidéo introuvable")
+        
+    report = VideoReport(
+        video_id=video.id,
+        user_id=current_user.id if current_user else None,
+        reason=report_data.reason
+    )
+    db.add(report)
+    db.commit()
+    return {"status": "reported"}
+
+@router.get("/{video_id}/stats", response_model=VideoStatsResponse)
+def get_video_stats(
+    video_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Vidéo introuvable")
+        
+    liked = False
+    if current_user:
+        like = db.query(VideoLike).filter(VideoLike.video_id == video.id, VideoLike.user_id == current_user.id).first()
+        liked = like is not None
+        
+    return {
+        "views": video.views_count,
+        "likes": video.likes_count,
+        "liked": liked
+    }
