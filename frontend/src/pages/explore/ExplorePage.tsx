@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TalentCard } from '../../components/ui/TalentCard';
 import axios from 'axios';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 
 const fetchTalents = async (params: any) => {
   const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
@@ -50,6 +50,13 @@ export const ExplorePage: React.FC = () => {
       
       <div className="max-w-7xl mx-auto relative z-10">
         
+        {/* Navigation retour */}
+        <div className="mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-300 hover:text-white transition-all font-medium">
+            <span>←</span> Retour à l'accueil
+          </Link>
+        </div>
+
         {/* En-tête de la page */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -136,16 +143,24 @@ export const ExplorePage: React.FC = () => {
             <p className="text-sm opacity-80 mt-1">{(error as any)?.message}</p>
           </div>
         ) : data?.items?.length === 0 ? (
-          <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-sm">
-            <p className="text-6xl mb-4 opacity-50">🔍</p>
-            <h3 className="text-xl font-bold text-white mb-2">Aucun talent trouvé</h3>
-            <p className="text-gray-400">Essayez de modifier vos critères de recherche.</p>
-            <button 
-              onClick={() => { setQuery(''); setCity(''); setCategory(''); }}
-              className="mt-6 px-6 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-colors font-semibold"
-            >
-              Réinitialiser les filtres
-            </button>
+          <div className="space-y-8 animate-fadeInUp">
+            <div className="text-center p-8 bg-purple-500/10 border border-purple-500/20 rounded-3xl backdrop-blur-sm">
+              <p className="text-4xl mb-4">✨</p>
+              <h3 className="text-2xl font-bold text-white mb-2">Votre base de données est prête !</h3>
+              <p className="text-purple-200">Il n'y a pas encore de vrais talents inscrits. En attendant, voici un aperçu avec des données fictives :</p>
+              <button 
+                onClick={() => { setQuery(''); setCity(''); setCategory(''); }}
+                className="mt-6 px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors font-semibold border border-white/10"
+              >
+                Réinitialiser les filtres
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-90 hover:opacity-100 transition-opacity">
+               <TalentCard id="mock-1" firstName="Sofia" lastName="Benali" city="Tunis" country="Tunisie" skills={['Chant Lyrique', 'Opéra', 'Piano']} isVerified={true} videoCount={12} aiScore={95} />
+               <TalentCard id="mock-2" firstName="Karim" lastName="Ouali" city="Sfax" country="Tunisie" skills={['Danse Contemporaine', 'Chorégraphie']} isVerified={true} videoCount={8} aiScore={88} />
+               <TalentCard id="mock-3" firstName="Lina" lastName="Meziani" city="Sousse" country="Tunisie" skills={['Football', 'Athlétisme']} isVerified={false} videoCount={4} aiScore={75} />
+            </div>
           </div>
         ) : (
           <>
