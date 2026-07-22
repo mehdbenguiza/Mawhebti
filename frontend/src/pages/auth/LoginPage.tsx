@@ -54,6 +54,13 @@ export const LoginPage: React.FC = () => {
     >
       {/* ── Left panel: form ── */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative">
+        {/* Bouton retour en haut à gauche */}
+        <Link 
+          to="/" 
+          className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors font-medium bg-white/5 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 z-20"
+        >
+          <span>←</span> Retour à l'accueil
+        </Link>
 
         {/* Background blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -249,12 +256,7 @@ export const LoginPage: React.FC = () => {
               </Link>
             </p>
 
-            {/* Back to home */}
-            <p className="text-center text-xs text-gray-700 mt-3">
-              <Link to="/" className="hover:text-gray-500 transition-colors">
-                ← Retour à l'accueil
-              </Link>
-            </p>
+            {/* Back to home (removed from bottom, moved to top) */}
           </div>
 
           {/* Trust badges */}

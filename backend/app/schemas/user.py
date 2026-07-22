@@ -13,6 +13,12 @@ class UserCreate(UserBase):
     phone_number: Optional[str] = None
     parent_email: Optional[EmailStr] = None
 
+class UserAccountUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+
 class UserResponse(UserBase):
     id: UUID
     role: UserRole

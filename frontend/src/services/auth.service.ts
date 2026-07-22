@@ -14,5 +14,9 @@ export const authService = {
   getMe: async () => {
     const response = await api.get<User>('/auth/me');
     return response.data;
+  },
+  updateAccount: async (data: { email?: string, phone_number?: string, current_password?: string, new_password?: string }) => {
+    const response = await api.patch('/auth/me/account', data);
+    return response.data;
   }
 };

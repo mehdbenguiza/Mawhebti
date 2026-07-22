@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { NavLink, Link, useNavigate, Outlet } from 'react-router-dom';
+import { NavLink, Link, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useQuery } from '@tanstack/react-query';
+import { profileService } from '../services/profile.service';
 
 const getNavLinks = (role: string | undefined) => {
   const links = [
@@ -27,8 +29,24 @@ const roleLabel: Record<string, { label: string; color: string; bg: string }> = 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['profile', 'me'],
+    queryFn: profileService.getMyProfile,
+    retry: false,
+  });
+
+  const isProfileComplete = profile && profile.first_name && profile.last_name;
+  const isProfilePage = location.pathname.endsWith('/profile');
+
+  React.useEffect(() => {
+    if (!isLoading && !isProfileComplete && !isProfilePage) {
+      navigate('profile', { replace: true });
+    }
+  }, [isLoading, isProfileComplete, isProfilePage, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -107,29 +125,51 @@ export const DashboardLayout: React.FC = () => {
 
           <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '4px 8px' }} />
 
-          {getNavLinks(user?.role).map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive ? 'text-white' : 'text-gray-400 hover:text-white'
-                }`
-              }
-              style={({ isActive }) => isActive ? {
-                background: 'linear-gradient(135deg, rgba(124,58,237,0.25), rgba(37,99,235,0.2))',
-                border: '1px solid rgba(124,58,237,0.3)',
-                boxShadow: '0 0 20px rgba(124,58,237,0.1)',
-              } : {}}
-            >
-              <span className="text-base flex-shrink-0">{link.icon}</span>
-              {sidebarOpen && (
-                <div className="flex-1 min-w-0">
-                  <span className="truncate block">{link.label}</span>
+          {getNavLinks(user?.role).map((link) => {
+            const isDisabled = !isProfileComplete && !link.to.includes('profile');
+            
+            if (isDisabled) {
+              return (
+                <div
+                  key={link.to}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 cursor-not-allowed opacity-50"
+                  title="Veuillez compléter votre profil pour y accéder"
+                >
+                  <span className="text-base flex-shrink-0">{link.icon}</span>
+                  {sidebarOpen && (
+                    <div className="flex-1 min-w-0">
+                      <span className="truncate block">{link.label}</span>
+                    </div>
+                  )}
+                  {sidebarOpen && <span className="text-xs">🔒</span>}
                 </div>
-              )}
-            </NavLink>
-          ))}
+              );
+            }
+
+            return (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive ? 'text-white' : 'text-gray-400 hover:text-white'
+                  }`
+                }
+                style={({ isActive }) => isActive ? {
+                  background: 'linear-gradient(135deg, rgba(124,58,237,0.25), rgba(37,99,235,0.2))',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  boxShadow: '0 0 20px rgba(124,58,237,0.1)',
+                } : {}}
+              >
+                <span className="text-base flex-shrink-0">{link.icon}</span>
+                {sidebarOpen && (
+                  <div className="flex-1 min-w-0">
+                    <span className="truncate block">{link.label}</span>
+                  </div>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* User info + logout */}
@@ -232,6 +272,15 @@ export const DashboardLayout: React.FC = () => {
           className="flex-1 overflow-y-auto"
           style={{ background: 'rgba(255,255,255,0.01)' }}
         >
+          {(!isProfileComplete && isProfilePage) && (
+            <div className="mx-6 mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-start gap-3 shadow-lg animate-fadeInUp">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <h4 className="text-yellow-400 font-bold mb-1">Bienvenue sur Mawhebti !</h4>
+                <p className="text-yellow-200/80 text-sm">Pour débloquer toutes les fonctionnalités de votre tableau de bord (messagerie, publication de vidéos, recherche), veuillez d'abord remplir vos informations de base (Nom, Prénom, etc.).</p>
+              </div>
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

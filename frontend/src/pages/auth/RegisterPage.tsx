@@ -85,7 +85,14 @@ export const RegisterPage: React.FC = () => {
 
       {/* Left panel - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 relative z-10 py-12 overflow-y-auto">
-        <div className="mx-auto w-full max-w-md">
+        {/* Bouton retour en haut à gauche */}
+        <Link 
+          to="/" 
+          className="absolute top-6 left-6 lg:left-12 flex items-center gap-2 text-gray-400 hover:text-white transition-colors font-medium bg-white/5 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 z-20"
+        >
+          <span>←</span> Retour à l'accueil
+        </Link>
+        <div className="mx-auto w-full max-w-md mt-8">
           <div className="text-center mb-8">
             <img src="/logo-complet.jfif" alt="Logo" className="h-20 w-auto object-contain mx-auto mb-6" style={{ borderRadius: '12px' }} />
             <h2 className="text-3xl font-bold text-white mb-2 tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>

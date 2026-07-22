@@ -4,6 +4,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileService } from '../../services/profile.service';
+import { authService } from '../../services/auth.service';
+import { useAuthStore } from '../../store/authStore';
+
+const accountSchema = z.object({
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  phone_number: z.string().optional().or(z.literal('')),
+  current_password: z.string().optional().or(z.literal('')),
+  new_password: z.string().optional().or(z.literal('')),
+});
+type AccountForm = z.infer<typeof accountSchema>;
 
 const profileSchema = z.object({
   first_name: z.string().min(1, 'Prénom requis').max(100).optional().or(z.literal('')),
@@ -19,6 +29,7 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 export const ProfilePage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { user, setAuth } = useAuthStore();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile', 'me'],
@@ -43,6 +54,27 @@ export const ProfilePage: React.FC = () => {
     formState: { errors, isSubmitting, isDirty },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
+  });
+
+  const accountMutation = useMutation({
+    mutationFn: authService.updateAccount,
+    onSuccess: (updatedUser) => {
+      useAuthStore.setState({ user: updatedUser });
+      resetAccount({ email: updatedUser.email, phone_number: updatedUser.phone_number || '', current_password: '', new_password: '' });
+    },
+  });
+
+  const {
+    register: registerAccount,
+    handleSubmit: handleSubmitAccount,
+    reset: resetAccount,
+    formState: { errors: accountErrors, isSubmitting: isSubmittingAccount, isDirty: isAccountDirty },
+  } = useForm<AccountForm>({
+    resolver: zodResolver(accountSchema),
+    defaultValues: {
+      email: user?.email || '',
+      phone_number: user?.phone_number || '',
+    }
   });
 
   useEffect(() => {
@@ -72,6 +104,15 @@ export const ProfilePage: React.FC = () => {
       city: data.city || undefined,
       country: data.country || undefined,
       skills,
+    });
+  };
+
+  const onSubmitAccount = async (data: AccountForm) => {
+    await accountMutation.mutateAsync({
+      email: data.email || undefined,
+      phone_number: data.phone_number || undefined,
+      current_password: data.current_password || undefined,
+      new_password: data.new_password || undefined,
     });
   };
 
@@ -204,6 +245,85 @@ export const ProfilePage: React.FC = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* ── Paramètres du Compte ── */}
+      <div className="pt-8">
+        <h2 className="text-2xl font-black text-white mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>Paramètres de connexion</h2>
+        <p className="text-gray-400 text-sm mb-6">Gérez votre adresse email, numéro de téléphone et mot de passe.</p>
+
+        {accountMutation.isSuccess && (
+          <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-xl text-sm font-medium flex items-center gap-3 shadow-lg mb-6">
+            <span>✅</span> Compte mis à jour avec succès !
+          </div>
+        )}
+        {accountMutation.isError && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm font-medium flex items-center gap-3 shadow-lg mb-6">
+            <span>❌</span> {(accountMutation.error as any)?.response?.data?.detail || "Une erreur est survenue."}
+          </div>
+        )}
+
+        <div className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl border border-white/10 p-6 sm:p-8">
+          <form onSubmit={handleSubmitAccount(onSubmitAccount)} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">Email</label>
+                <input
+                  type="email"
+                  {...registerAccount('email')}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white text-sm"
+                />
+                {accountErrors.email && <p className="mt-1 text-xs text-red-400">{accountErrors.email.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">Téléphone</label>
+                <input
+                  type="tel"
+                  {...registerAccount('phone_number')}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white text-sm"
+                />
+                {accountErrors.phone_number && <p className="mt-1 text-xs text-red-400">{accountErrors.phone_number.message}</p>}
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-white/10">
+              <h3 className="text-lg font-bold text-white mb-4">Changer de mot de passe</h3>
+              <p className="text-sm text-gray-400 mb-4">Pour modifier votre email ou votre mot de passe, veuillez obligatoirement saisir votre mot de passe actuel.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">Mot de passe actuel</label>
+                  <input
+                    type="password"
+                    {...registerAccount('current_password')}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white text-sm"
+                    placeholder="Obligatoire"
+                  />
+                  {accountErrors.current_password && <p className="mt-1 text-xs text-red-400">{accountErrors.current_password.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">Nouveau mot de passe</label>
+                  <input
+                    type="password"
+                    {...registerAccount('new_password')}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none text-white text-sm"
+                    placeholder="Laissez vide pour conserver l'actuel"
+                  />
+                  {accountErrors.new_password && <p className="mt-1 text-xs text-red-400">{accountErrors.new_password.message}</p>}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-6 border-t border-white/10">
+              <button
+                type="submit"
+                disabled={!isAccountDirty || isSubmittingAccount || accountMutation.isPending}
+                className="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-600 shadow-[0_0_20px_rgba(0,0,0,0.3)] text-white rounded-xl font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm hover:scale-[1.02] active:scale-95"
+              >
+                {(isSubmittingAccount || accountMutation.isPending) ? 'Mise à jour...' : 'Mettre à jour le compte'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
