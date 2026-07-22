@@ -3,7 +3,7 @@ import datetime
 from app.models.user import User, UserRole, UserStatus
 from app.models.profile import Profile
 from app.core.security import get_password_hash, create_access_token
-from tests.conftest import client, TestingSessionLocal
+from tests.conftest import TestingSessionLocal
 
 def create_test_user_with_profile(email, role=UserRole.TALENT_MAJOR, status=UserStatus.ACTIVE, **profile_kwargs):
     db = TestingSessionLocal()
@@ -33,12 +33,12 @@ def get_auth_headers(user):
     return {"Authorization": f"Bearer {token}"}
 
 # Tests for Search
-def test_search_talents_no_results():
+def test_search_talents_no_results(client):
     response = client.get("/api/v1/talents/search?query=xyz123")
     assert response.status_code == 200
     assert response.json()["total"] == 0
 
-def test_search_talents_with_results():
+def test_search_talents_with_results(client):
     user, profile = create_test_user_with_profile(
         email="talentsearch1@example.com", 
         first_name="Alice", 
@@ -53,7 +53,7 @@ def test_search_talents_with_results():
     assert data["total"] >= 1
     assert any(item["first_name"] == "Alice" for item in data["items"])
     
-def test_search_filters():
+def test_search_filters(client):
     user1, _ = create_test_user_with_profile("t1@ex.com", city="Sfax", skills=["React"])
     user2, _ = create_test_user_with_profile("t2@ex.com", city="Tunis", skills=["React"])
     
@@ -64,14 +64,14 @@ def test_search_filters():
     for item in data["items"]:
         assert item["city"] == "Sfax"
         
-def test_search_inactive_user_hidden():
+def test_search_inactive_user_hidden(client):
     user_inactive, _ = create_test_user_with_profile("inactive@ex.com", status=UserStatus.SUSPENDED, first_name="Hidden")
     
     response = client.get("/api/v1/talents/search?query=Hidden")
     assert response.status_code == 200
     assert response.json()["total"] == 0
 
-def test_get_public_profile():
+def test_get_public_profile(client):
     user, profile = create_test_user_with_profile(
         email="pubprofile@example.com", 
         first_name="Bob",
@@ -85,7 +85,7 @@ def test_get_public_profile():
     # Ensure sensitive info is NOT exposed
     assert "date_of_birth" not in data
 
-def test_anonymous_access():
+def test_anonymous_access(client):
     """L'accès anonyme est autorisé pour la recherche et la consultation."""
     user, profile = create_test_user_with_profile("anon@example.com", first_name="AnonSearch")
     

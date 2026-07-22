@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+from uuid import UUID
 
 from app.core.database import get_db
 from app.api.dependencies import get_current_user, get_optional_current_user
@@ -55,7 +56,7 @@ def get_pending_videos(
 
 @router.put("/{video_id}/consent", response_model=VideoResponse)
 def consent_to_video(
-    video_id: str,
+    video_id: UUID,
     action: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -144,7 +145,7 @@ def get_video_feed(
 
 @router.post("/{video_id}/like")
 def toggle_like_video(
-    video_id: str,
+    video_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -171,7 +172,7 @@ def toggle_like_video(
 
 @router.post("/{video_id}/view")
 def register_video_view(
-    video_id: str,
+    video_id: UUID,
     view_data: VideoViewCreate,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user)
@@ -210,7 +211,7 @@ def register_video_view(
 
 @router.post("/{video_id}/report")
 def report_video(
-    video_id: str,
+    video_id: UUID,
     report_data: VideoReportCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -246,7 +247,7 @@ def report_video(
 
 @router.get("/{video_id}/stats", response_model=VideoStatsResponse)
 def get_video_stats(
-    video_id: str,
+    video_id: UUID,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user)
 ):

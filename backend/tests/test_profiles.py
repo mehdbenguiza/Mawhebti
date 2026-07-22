@@ -6,7 +6,7 @@ import pytest
 
 from app.models.user import User, UserRole, UserStatus
 from app.core.security import get_password_hash, create_access_token
-from tests.conftest import client, TestingSessionLocal
+from tests.conftest import TestingSessionLocal
 
 
 def create_test_user_and_token(email="testprofile@example.com", role=UserRole.TALENT_MAJOR):
@@ -31,14 +31,14 @@ def create_test_user_and_token(email="testprofile@example.com", role=UserRole.TA
     return token
 
 
-def test_get_my_profile_not_found():
+def test_get_my_profile_not_found(client):
     """Un utilisateur sans profil doit recevoir un 404."""
     token = create_test_user_and_token(email="noprofile@example.com")
     response = client.get("/api/v1/profiles/me", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 404
 
 
-def test_create_and_get_profile():
+def test_create_and_get_profile(client):
     """On doit pouvoir créer un profil via PUT et le récupérer via GET."""
     token = create_test_user_and_token(email="createprofile@example.com")
     headers = {"Authorization": f"Bearer {token}"}
@@ -55,7 +55,7 @@ def test_create_and_get_profile():
     assert response.json()["last_name"] == "Benguiza"
 
 
-def test_profile_requires_authentication():
+def test_profile_requires_authentication(client):
     """Sans token JWT, les endpoints doivent retourner 401."""
     response = client.get("/api/v1/profiles/me")
     assert response.status_code == 401
@@ -64,7 +64,7 @@ def test_profile_requires_authentication():
     assert response.status_code == 401
 
 
-def test_profile_skills_validation():
+def test_profile_skills_validation(client):
     """Dépasse 20 compétences doit retourner 422."""
     token = create_test_user_and_token(email="skillstest@example.com")
     headers = {"Authorization": f"Bearer {token}"}
@@ -74,7 +74,7 @@ def test_profile_skills_validation():
     assert response.status_code == 422
 
 
-def test_date_of_birth_not_exposed_in_public():
+def test_date_of_birth_not_exposed_in_public(client):
     """
     La date de naissance ne doit jamais fuiter dans des réponses non privées.
     Ce test vérifie que le schéma 'ProfileResponsePrivate' est bien utilisé pour /me.

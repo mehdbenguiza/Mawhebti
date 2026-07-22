@@ -2,10 +2,8 @@
 Tests d'authentification.
 La base de données SQLite de test est configurée dans conftest.py.
 """
-from tests.conftest import client
 
-
-def test_register_user():
+def test_register_user(client):
     response = client.post(
         "/api/v1/auth/register",
         json={"email": "test_auth@example.com", "password": "password123", "role": "TALENT_MAJOR"}
@@ -16,7 +14,7 @@ def test_register_user():
     assert "id" in data
 
 
-def test_register_duplicate_user():
+def test_register_duplicate_user(client):
     # Enregistrer une première fois
     client.post(
         "/api/v1/auth/register",
@@ -31,7 +29,7 @@ def test_register_duplicate_user():
     assert response.json() == {"detail": "Email already registered"}
 
 
-def test_login_user():
+def test_login_user(client):
     # D'abord s'inscrire
     client.post(
         "/api/v1/auth/register",
@@ -47,7 +45,7 @@ def test_login_user():
     assert data["token_type"] == "bearer"
 
 
-def test_login_incorrect_password():
+def test_login_incorrect_password(client):
     client.post(
         "/api/v1/auth/register",
         json={"email": "test_wrong@example.com", "password": "password123", "role": "TALENT_MAJOR"}
