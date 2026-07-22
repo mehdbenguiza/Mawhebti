@@ -10,6 +10,8 @@ import { UploadVideoPage } from './pages/dashboard/UploadVideoPage';
 import { RecruiterDashboard } from './pages/dashboard/RecruiterDashboard';
 import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
+import { SetupProfilePage } from './pages/profile/SetupProfilePage';
+import { SettingsPage } from './pages/profile/SettingsPage';
 import { FeedPage } from './pages/feed/FeedPage';
 import { InboxPage } from './pages/dashboard/InboxPage';
 import { ExplorePage } from './pages/explore/ExplorePage';
@@ -66,8 +68,10 @@ function App() {
             }
           >
             <Route index element={<Navigate to="overview" replace />} />
+            <Route path="setup" element={<SetupProfilePage />} />
             <Route path="overview" element={<TalentDashboard />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="settings" element={<SettingsPage />} />
             <Route path="upload" element={<UploadVideoPage />} />
             <Route path="inbox" element={<InboxPage />} />
           </Route>
@@ -84,8 +88,10 @@ function App() {
             }
           >
             <Route index element={<Navigate to="overview" replace />} />
+            <Route path="setup" element={<SetupProfilePage />} />
             <Route path="overview" element={<RecruiterDashboard />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="settings" element={<SettingsPage />} />
             <Route path="inbox" element={<InboxPage />} />
           </Route>
 
@@ -101,8 +107,10 @@ function App() {
             }
           >
             <Route index element={<Navigate to="overview" replace />} />
+            <Route path="setup" element={<SetupProfilePage />} />
             <Route path="overview" element={<ParentDashboard />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="settings" element={<SettingsPage />} />
             <Route path="inbox" element={<InboxPage />} />
           </Route>
 

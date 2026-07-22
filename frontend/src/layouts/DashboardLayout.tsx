@@ -10,6 +10,7 @@ const getNavLinks = (role: string | undefined) => {
     { to: 'overview', label: 'Vue d\'ensemble',  icon: '⚡', desc: 'Tableau de bord'  },
     { to: 'inbox',    label: 'Messagerie',       icon: '💬', desc: 'Messages'         },
     { to: 'profile',  label: 'Mon profil',       icon: '👤', desc: 'Mes informations' },
+    { to: 'settings', label: 'Paramètres du compte', icon: '⚙️', desc: 'Sécurité et Email' },
   ];
   if (role === 'TALENT_MINOR' || role === 'TALENT_MAJOR') {
     links.push({ to: 'upload', label: 'Publier une vidéo', icon: '🎥', desc: 'Uploader' });
@@ -40,13 +41,16 @@ export const DashboardLayout: React.FC = () => {
   });
 
   const isProfileComplete = profile && profile.first_name && profile.last_name;
-  const isProfilePage = location.pathname.endsWith('/profile');
+  const isSetupPage = location.pathname.endsWith('/setup');
 
   React.useEffect(() => {
-    if (!isLoading && !isProfileComplete && !isProfilePage) {
-      navigate('profile', { replace: true });
+    if (!isLoading && !isProfileComplete && !isSetupPage) {
+      navigate('setup', { replace: true });
     }
-  }, [isLoading, isProfileComplete, isProfilePage, navigate]);
+    if (!isLoading && isProfileComplete && isSetupPage) {
+      navigate('overview', { replace: true });
+    }
+  }, [isLoading, isProfileComplete, isSetupPage, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -126,7 +130,7 @@ export const DashboardLayout: React.FC = () => {
           <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '4px 8px' }} />
 
           {getNavLinks(user?.role).map((link) => {
-            const isDisabled = !isProfileComplete && !link.to.includes('profile');
+            const isDisabled = !isProfileComplete;
             
             if (isDisabled) {
               return (
@@ -272,15 +276,6 @@ export const DashboardLayout: React.FC = () => {
           className="flex-1 overflow-y-auto"
           style={{ background: 'rgba(255,255,255,0.01)' }}
         >
-          {(!isProfileComplete && isProfilePage) && (
-            <div className="mx-6 mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl flex items-start gap-3 shadow-lg animate-fadeInUp">
-              <span className="text-xl">⚠️</span>
-              <div>
-                <h4 className="text-yellow-400 font-bold mb-1">Bienvenue sur Mawhebti !</h4>
-                <p className="text-yellow-200/80 text-sm">Pour débloquer toutes les fonctionnalités de votre tableau de bord (messagerie, publication de vidéos, recherche), veuillez d'abord remplir vos informations de base (Nom, Prénom, etc.).</p>
-              </div>
-            </div>
-          )}
           <Outlet />
         </main>
       </div>

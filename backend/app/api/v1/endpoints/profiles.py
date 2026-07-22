@@ -7,7 +7,9 @@ Sécurité :
 - Les admins/modérateurs auront des routes séparées dans un module d'administration.
 - Le rate limiting doit être configuré au niveau du reverse-proxy (Nginx) en production.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+import shutil
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -64,3 +66,40 @@ def update_my_profile(
     _check_user_active(current_user)
     updated_profile = upsert_profile(db, current_user.id, profile_data)
     return updated_profile
+
+@router.post("/me/avatar", response_model=ProfileResponsePrivate)
+def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload et met à jour l'avatar de l'utilisateur connecté.
+    """
+    _check_user_active(current_user)
+    profile = get_profile_by_user_id(db, current_user.id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profil non trouvé. Veuillez le créer d'abord.",
+        )
+    
+    os.makedirs("uploads/avatars", exist_ok=True)
+    file_extension = file.filename.split(".")[-1] if file.filename and "." in file.filename else "jpg"
+    
+    # Validation du type (basique)
+    allowed_extensions = ["jpg", "jpeg", "png", "webp", "gif"]
+    if file_extension.lower() not in allowed_extensions:
+         raise HTTPException(status_code=400, detail="Format d'image non supporté")
+         
+    file_path = f"uploads/avatars/{current_user.id}.{file_extension}"
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    profile.avatar_url = f"/{file_path}"
+    db.commit()
+    db.refresh(profile)
+    
+    return profile
+
