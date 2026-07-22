@@ -1,5 +1,5 @@
 import api from './api';
-import type { Video } from '../types/video';
+import type { Video, TalentAnalytics } from '../types/video';
 
 export const videoService = {
   uploadVideo: async (formData: FormData): Promise<Video> => {
@@ -60,6 +60,12 @@ export const videoService = {
 
   getVideoStats: async (videoId: string): Promise<{views: number, likes: number, liked: boolean}> => {
     const response = await api.get(`/videos/${videoId}/stats`);
+    return response.data;
+  },
+
+  /** Dashboard analytics complet du talent connecté — un seul appel API */
+  getMyAnalytics: async (): Promise<TalentAnalytics> => {
+    const response = await api.get('/dashboard/talent');
     return response.data;
   },
 };
