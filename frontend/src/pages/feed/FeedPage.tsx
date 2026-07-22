@@ -27,6 +27,9 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('contenu inapproprié');
   const [reportStatus, setReportStatus] = useState<'idle'|'loading'|'success'>('idle');
+  const [shareToast, setShareToast] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
 
@@ -101,43 +104,98 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
       alert("Veuillez vous connecter pour aimer cette vidéo.");
       return;
     }
+    // Optimistic update
     const previousLiked = isLiked;
     const previousCount = likesCount;
-    
     setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+    setLikesCount(prev => isLiked ? Math.max(0, prev - 1) : prev + 1);
     
     try {
       const res = await videoService.likeVideo(video.id);
+      // Le backend est la source de vérité
       setLikesCount(res.likes_count);
-      setIsLiked(res.action === 'liked');
+      setIsLiked(res.liked);
     } catch (e) {
+      // Rollback sur erreur réseau
       setIsLiked(previousLiked);
       setLikesCount(previousCount);
-      console.error(e);
+      console.error('Like error:', e);
     }
   };
 
   const handleShare = async () => {
+    const url = `${window.location.origin}/feed?v=${video.id}`;
+    
+    // Méthode 1 : Web Share API (mobile natif)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: video.title,
+          text: `Découvrez ce talent sur Mawhebti : ${video.title}`,
+          url,
+        });
+        return;
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') console.warn('Web Share failed, trying clipboard');
+        else return; // L'utilisateur a annulé
+      }
+    }
+    
+    // Méthode 2 : Clipboard API (HTTPS)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 3000);
+        return;
+      } catch (e) {
+        console.warn('Clipboard API failed, trying execCommand');
+      }
+    }
+    
+    // Méthode 3 : execCommand (legacy, fonctionne sur HTTP)
+    const textarea = document.createElement('textarea');
+    textarea.value = url;
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
     try {
-      const url = `${window.location.origin}/feed`; 
-      await navigator.clipboard.writeText(url);
-      alert("Lien copié dans le presse-papier !");
+      document.execCommand('copy');
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 3000);
     } catch (e) {
-      console.error("Share error", e);
+      // Méthode 4 : Modal manuelle
+      setShareUrl(url);
+      setShowShareModal(true);
+    } finally {
+      document.body.removeChild(textarea);
     }
   };
 
   const handleReport = async () => {
+    if (!user) {
+      alert("Veuillez vous connecter pour signaler cette vidéo.");
+      return;
+    }
     try {
       setReportStatus('loading');
       await videoService.reportVideo(video.id, reportReason);
       setReportStatus('success');
-      setTimeout(() => setShowReportModal(false), 2000);
-    } catch (e) {
-      console.error(e);
+      setTimeout(() => {
+        setShowReportModal(false);
+        setReportStatus('idle');
+      }, 2000);
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || "Erreur lors du signalement.";
       setReportStatus('idle');
-      alert("Erreur lors du signalement.");
+      if (err?.response?.status === 409) {
+        // Déjà signalé
+        setReportStatus('already_reported' as any);
+      } else {
+        alert(msg);
+      }
     }
   };
 
@@ -386,15 +444,26 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
             <h3 className="text-xl font-bold mb-4 text-red-500 font-display">Signaler la vidéo</h3>
             
             {reportStatus === 'success' ? (
-              <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-xl text-center text-sm">
-                Signalement reçu. Merci pour votre aide !
+              <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-xl text-center">
+                <div className="text-2xl mb-2">✅</div>
+                <p className="text-sm font-semibold">Signalement reçu. Merci pour votre aide !</p>
+              </div>
+            ) : (reportStatus as string) === 'already_reported' ? (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 p-4 rounded-xl text-center">
+                <div className="text-2xl mb-2">⚠️</div>
+                <p className="text-sm font-semibold">Vous avez déjà signalé cette vidéo.</p>
+                <button onClick={() => { setShowReportModal(false); setReportStatus('idle'); }} className="mt-3 px-4 py-2 bg-white/10 rounded-lg text-xs font-semibold">Fermer</button>
               </div>
             ) : (
               <>
                 <p className="text-sm text-gray-300 mb-4">Pourquoi signalez-vous cette vidéo ?</p>
                 <div className="flex flex-col gap-2 mb-6">
-                  {['contenu inapproprié', 'spam', 'harcèlement', 'autre'].map(reason => (
-                    <label key={reason} className="flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:bg-white/5 cursor-pointer transition-colors">
+                  {['contenu inapproprié', 'spam', 'harcèlement', 'fausse identité', 'autre'].map(reason => (
+                    <label key={reason} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                      reportReason === reason
+                        ? 'border-red-500/50 bg-red-500/10'
+                        : 'border-white/10 hover:bg-white/5'
+                    }`}>
                       <input 
                         type="radio" 
                         name="reportReason" 
@@ -419,11 +488,63 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
                     disabled={reportStatus === 'loading'}
                     className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-xl shadow-lg disabled:opacity-50 transition-all"
                   >
-                    {reportStatus === 'loading' ? 'Envoi...' : 'Signaler'}
+                    {reportStatus === 'loading' ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        Envoi...
+                      </span>
+                    ) : 'Signaler 🚩'}
                   </button>
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Share Toast (copie réussie) */}
+      {shareToast && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-green-500/90 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-xl border border-green-400/30 flex items-center gap-2 animate-bounce">
+          ✅ Lien copié !
+        </div>
+      )}
+
+      {/* Share Modal (fallback manuel) */}
+      {showShareModal && (
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-[#13131a] border border-white/10 rounded-2xl p-6 w-full max-w-sm text-white shadow-2xl">
+            <h3 className="text-xl font-bold mb-2">Partager cette vidéo</h3>
+            <p className="text-sm text-gray-400 mb-4">Copiez ce lien et partagez-le :</p>
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3">
+              <input
+                readOnly
+                value={shareUrl}
+                className="flex-1 bg-transparent text-sm text-gray-200 outline-none"
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                onClick={() => {
+                  const el = document.createElement('textarea');
+                  el.value = shareUrl;
+                  document.body.appendChild(el);
+                  el.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(el);
+                  setShareToast(true);
+                  setShowShareModal(false);
+                  setTimeout(() => setShareToast(false), 3000);
+                }}
+                className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-lg transition-colors"
+              >
+                Copier
+              </button>
+            </div>
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="w-full mt-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-semibold rounded-xl transition-colors"
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}

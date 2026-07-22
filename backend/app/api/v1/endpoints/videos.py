@@ -158,14 +158,16 @@ def toggle_like_video(
         db.delete(like)
         video.likes_count = max(0, video.likes_count - 1)
         action = "unliked"
+        liked = False
     else:
         new_like = VideoLike(user_id=current_user.id, video_id=video.id)
         db.add(new_like)
         video.likes_count += 1
         action = "liked"
+        liked = True
         
     db.commit()
-    return {"action": action, "likes_count": video.likes_count}
+    return {"action": action, "liked": liked, "likes_count": video.likes_count}
 
 @router.post("/{video_id}/view")
 def register_video_view(
@@ -211,16 +213,32 @@ def report_video(
     video_id: str,
     report_data: VideoReportCreate,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user)
+    current_user: User = Depends(get_current_user),
 ):
+    """
+    Signale une vidéo. Un utilisateur ne peut signaler une vidéo qu'une seule fois
+    (contrainte unique (user_id, video_id) en base).
+    """
     video = db.query(Video).filter(Video.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Vidéo introuvable")
+
+    # Vérifier si l'utilisateur a déjà signalé cette vidéo
+    existing_report = (
+        db.query(VideoReport)
+        .filter(VideoReport.video_id == video.id, VideoReport.user_id == current_user.id)
+        .first()
+    )
+    if existing_report:
+        raise HTTPException(
+            status_code=409,
+            detail="Vous avez déjà signalé cette vidéo.",
+        )
         
     report = VideoReport(
         video_id=video.id,
-        user_id=current_user.id if current_user else None,
-        reason=report_data.reason
+        user_id=current_user.id,
+        reason=report_data.reason,
     )
     db.add(report)
     db.commit()

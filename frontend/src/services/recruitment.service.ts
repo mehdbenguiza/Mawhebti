@@ -1,70 +1,115 @@
-import axios from 'axios';
-import { useAuthStore } from '../store/authStore';
+/**
+ * RecruitmentService — Toutes les opérations de recrutement.
+ *
+ * Architecture :
+ * - Utilise exclusivement `api` (axios avec intercepteur Bearer token automatique).
+ * - Aucun `user_id` ne vient du frontend — le backend le lit depuis le JWT.
+ * - Aucun `axios` direct : tout passe par api.ts.
+ */
+import api from './api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.182.128:8000/api/v1';
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 
-const getCurrentUserId = () => {
-  const userId = useAuthStore.getState().user?.id;
-  if (!userId) throw new Error("Non connecté");
-  return userId;
-};
+export interface RecruiterDashboardStats {
+  saved_talents: number;
+  pending_requests: number;
+  accepted_requests: number;
+  rejected_requests: number;
+  active_conversations: number;
+}
+
+export interface SavedTalentItem {
+  saved_id: string;
+  saved_at: string;
+  talent: {
+    id: string;
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+    city: string | null;
+    main_skill: string | null;
+    skills: string[];
+  };
+}
+
+export interface SavedTalentsPage {
+  items: SavedTalentItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Service
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const recruitmentService = {
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  /** Un seul appel pour alimenter tout le dashboard recruteur */
+  getDashboard: async (): Promise<RecruiterDashboardStats> => {
+    const res = await api.get('/recruitment/dashboard');
+    return res.data;
+  },
+
+  // ── Favoris ────────────────────────────────────────────────────────────────
+
+  /** Liste paginée des talents sauvegardés */
+  getSavedTalents: async (page = 1, pageSize = 12): Promise<SavedTalentsPage> => {
+    const res = await api.get(`/recruitment/saved-talents?page=${page}&page_size=${pageSize}`);
+    return res.data;
+  },
+
+  /** Sauvegarder ou retirer un talent des favoris */
+  toggleSavedTalent: async (talentId: string): Promise<{ action: 'saved' | 'removed'; talent_id: string }> => {
+    const res = await api.post(`/recruitment/saved-talents/${talentId}/toggle`);
+    return res.data;
+  },
+
+  // ── Demandes de contact ────────────────────────────────────────────────────
+
   createContactRequest: async (talentId: string, message: string) => {
-    const recruiterId = getCurrentUserId();
-    const response = await axios.post(
-      `${API_URL}/recruitment/requests?recruiter_id=${recruiterId}&subject_talent_id=${talentId}&message=${encodeURIComponent(message)}`
+    const res = await api.post(
+      `/recruitment/requests?subject_talent_id=${talentId}&message=${encodeURIComponent(message)}`
     );
-    return response.data;
+    return res.data;
   },
 
   acceptContactRequest: async (requestId: string) => {
-    const acceptorId = getCurrentUserId();
-    const response = await axios.post(
-      `${API_URL}/recruitment/requests/${requestId}/accept?acceptor_id=${acceptorId}`
-    );
-    return response.data;
+    const res = await api.post(`/recruitment/requests/${requestId}/accept`);
+    return res.data;
   },
 
   rejectContactRequest: async (requestId: string) => {
-    const rejectorId = getCurrentUserId();
-    const response = await axios.post(
-      `${API_URL}/recruitment/requests/${requestId}/reject?rejector_id=${rejectorId}`
-    );
-    return response.data;
+    const res = await api.post(`/recruitment/requests/${requestId}/reject`);
+    return res.data;
   },
 
   getRequests: async () => {
-    const userId = getCurrentUserId();
-    const response = await axios.get(`${API_URL}/recruitment/requests?user_id=${userId}`);
-    return response.data;
+    const res = await api.get('/recruitment/requests');
+    return res.data;
   },
 
+  // ── Messagerie ─────────────────────────────────────────────────────────────
+
   getConversations: async () => {
-    const userId = getCurrentUserId();
-    const response = await axios.get(`${API_URL}/conversations/?user_id=${userId}`);
-    return response.data;
+    const res = await api.get('/conversations/');
+    return res.data;
   },
 
   getMessages: async (conversationId: string) => {
-    const userId = getCurrentUserId();
-    const response = await axios.get(`${API_URL}/conversations/${conversationId}/messages?user_id=${userId}`);
-    return response.data;
+    const res = await api.get(`/conversations/${conversationId}/messages`);
+    return res.data;
   },
 
   sendMessage: async (conversationId: string, content: string) => {
-    const senderId = getCurrentUserId();
-    const response = await axios.post(
-      `${API_URL}/conversations/${conversationId}/messages?content=${encodeURIComponent(content)}&sender_id=${senderId}`
+    const res = await api.post(
+      `/conversations/${conversationId}/messages?content=${encodeURIComponent(content)}`
     );
-    return response.data;
-  },
-
-  toggleSavedTalent: async (talentId: string) => {
-    const recruiterId = getCurrentUserId();
-    const response = await axios.post(
-      `${API_URL}/recruitment/saved-talents/${talentId}/toggle?recruiter_id=${recruiterId}`
-    );
-    return response.data;
+    return res.data;
   },
 };

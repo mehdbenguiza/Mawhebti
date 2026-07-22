@@ -39,7 +39,7 @@ export const videoService = {
     return response.data;
   },
 
-  likeVideo: async (videoId: string): Promise<{action: string, likes_count: number}> => {
+  likeVideo: async (videoId: string): Promise<{action: string, liked: boolean, likes_count: number}> => {
     const response = await api.post(`/videos/${videoId}/like`);
     return response.data;
   },

@@ -57,9 +57,12 @@ class VideoView(Base):
 
 class VideoReport(Base):
     __tablename__ = "video_reports"
+    __table_args__ = (
+        UniqueConstraint("user_id", "video_id", name="uix_user_video_report"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     video_id = Column(UUID(as_uuid=True), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     reason = Column(String(255), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
