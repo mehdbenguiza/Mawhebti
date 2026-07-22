@@ -102,6 +102,7 @@ def get_recruitment_requests(user_id: UUID, db: Session = Depends(get_db)):
             "i_am_sender": str(r.recruiter_id) == str(user_id),
             "recruiter": {"id": str(r.recruiter_id), "name": recruiter_name},
             "talent": {"id": str(r.subject_talent_id), "name": talent_name},
+        })
     return result
 
 @router.post("/saved-talents/{talent_id}/toggle")
