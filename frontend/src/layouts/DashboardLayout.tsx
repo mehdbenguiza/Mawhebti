@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { profileService } from '../services/profile.service';
 import { NotificationDropdown } from '../components/ui/NotificationDropdown';
 
@@ -32,6 +32,7 @@ export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -55,6 +56,7 @@ export const DashboardLayout: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    queryClient.clear(); // Vider le cache pour éviter que le prochain utilisateur voie le profil précédent
     navigate('/', { replace: true });
   };
 
