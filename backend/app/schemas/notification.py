@@ -18,8 +18,8 @@ class NotificationBase(BaseModel):
     entity_id: Optional[UUID] = None
     action_type: NotificationAction = NotificationAction.NONE
     created_by: Optional[UUID] = None
-    channels_sent: Dict[str, Any] = {}
-    payload: Dict[str, Any] = {}
+    channels_sent: Optional[Dict[str, Any]] = None
+    payload: Optional[Dict[str, Any]] = None
 
 class NotificationResponse(NotificationBase):
     id: UUID

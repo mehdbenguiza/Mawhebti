@@ -10,7 +10,7 @@ import { UploadVideoPage } from './pages/dashboard/UploadVideoPage';
 import { RecruiterDashboard } from './pages/dashboard/RecruiterDashboard';
 import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
-import { SetupProfilePage } from './pages/dashboard/SetupProfilePage';
+import { SetupProfilePage } from './pages/profile/SetupProfilePage';
 import { NotificationSettingsPage } from './pages/dashboard/NotificationSettingsPage';
 import { SettingsPage } from './pages/profile/SettingsPage';
 import { FeedPage } from './pages/feed/FeedPage';
