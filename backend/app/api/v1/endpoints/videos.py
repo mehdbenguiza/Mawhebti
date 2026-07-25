@@ -169,9 +169,9 @@ def toggle_like_video(
         liked = True
         
         # Déclencher la notification
-        if str(video.creator_id) != str(current_user.id):
+        if str(video.user_id) != str(current_user.id):
             event_bus.publish("video.liked", {
-                "video_owner_id": str(video.creator_id),
+                "video_owner_id": str(video.user_id),
                 "liker_name": current_user.first_name,
                 "liker_id": str(current_user.id),
                 "video_title": video.title,
