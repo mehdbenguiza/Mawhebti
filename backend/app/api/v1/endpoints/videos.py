@@ -170,13 +170,13 @@ def toggle_like_video(
         
         # Déclencher la notification
         if str(video.user_id) != str(current_user.id):
-            event_bus.publish("video.liked", {
-                "video_owner_id": str(video.user_id),
-                "liker_name": current_user.first_name,
-                "liker_id": str(current_user.id),
-                "video_title": video.title,
-                "video_id": str(video.id)
-            })
+            event_bus.publish("video.liked", 
+                video_owner_id=str(video.user_id),
+                liker_name=current_user.first_name,
+                liker_id=str(current_user.id),
+                video_title=video.title,
+                video_id=str(video.id)
+            )
         
     db.commit()
     return {"action": action, "liked": liked, "likes_count": video.likes_count}
