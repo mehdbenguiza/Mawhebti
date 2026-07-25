@@ -187,8 +187,8 @@ class Notification(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    recipient = relationship("User")
-
+    recipient = relationship("User", foreign_keys=[recipient_id])
+    creator = relationship("User", foreign_keys=[created_by])
 
 class NotificationSettings(Base):
     __tablename__ = "notification_settings"
