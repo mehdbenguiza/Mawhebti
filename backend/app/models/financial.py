@@ -50,7 +50,7 @@ class PaymentIntent(Base):
     provider_payment_id = Column(String(255), nullable=False, unique=True, index=True)
     checkout_url = Column(String(1024), nullable=True)
     
-    status = Column(Enum(PaymentIntentStatus), nullable=False, default=PaymentIntentStatus.CREATED)
+    status = Column(Enum(PaymentIntentStatus, native_enum=False, length=50), nullable=False, default=PaymentIntentStatus.CREATED)
     
     expires_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -70,7 +70,7 @@ class Donation(Base):
     message = Column(Text, nullable=True)
     
     payment_method = Column(String(100), nullable=True)
-    payment_status = Column(Enum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING)
+    payment_status = Column(Enum(PaymentStatus, native_enum=False, length=50), nullable=False, default=PaymentStatus.PENDING)
     
     transaction_reference = Column(String(255), nullable=True, unique=True)
     platform_fee = Column(Numeric(12, 2), nullable=False, default=0.00)
@@ -92,8 +92,8 @@ class FinancialTransaction(Base):
     fee = Column(Numeric(12, 2), nullable=False, default=0.00)
     net_amount = Column(Numeric(12, 2), nullable=False, default=0.00)
     
-    transaction_direction = Column(Enum(TransactionDirection), nullable=False)
-    transaction_reason = Column(Enum(TransactionReason), nullable=False)
+    transaction_direction = Column(Enum(TransactionDirection, native_enum=False, length=50), nullable=False)
+    transaction_reason = Column(Enum(TransactionReason, native_enum=False, length=50), nullable=False)
     
     provider = Column(String(50), nullable=False)
     provider_reference = Column(String(255), nullable=False, unique=True, index=True)
@@ -134,7 +134,7 @@ class FraudCheck(Base):
     donation_id = Column(UUID(as_uuid=True), ForeignKey("donations.id", ondelete="CASCADE"), nullable=False)
     
     risk_score = Column(Integer, nullable=False, default=0)
-    decision = Column(Enum(FraudDecision), nullable=False, default=FraudDecision.CLEAN)
+    decision = Column(Enum(FraudDecision, native_enum=False, length=50), nullable=False, default=FraudDecision.CLEAN)
     reasons = Column(JSON, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())

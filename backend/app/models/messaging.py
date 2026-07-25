@@ -35,8 +35,8 @@ class Conversation(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     subject_talent_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    status = Column(Enum(ConversationStatus), nullable=False, default=ConversationStatus.OPEN)
-    recruitment_stage = Column(Enum(RecruitmentStage), nullable=False, default=RecruitmentStage.NEW_CONTACT)
+    status = Column(Enum(ConversationStatus, native_enum=False, length=50), nullable=False, default=ConversationStatus.OPEN)
+    recruitment_stage = Column(Enum(RecruitmentStage, native_enum=False, length=50), nullable=False, default=RecruitmentStage.NEW_CONTACT)
     risk_score = Column(Integer, default=0, nullable=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -57,7 +57,7 @@ class ConversationParticipant(Base):
 
     conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), primary_key=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    role = Column(Enum(ConversationParticipantRole), nullable=False)
+    role = Column(Enum(ConversationParticipantRole, native_enum=False, length=50), nullable=False)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
     conversation = relationship("Conversation", back_populates="participants")
@@ -71,7 +71,7 @@ class Message(Base):
     conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     
-    message_type = Column(Enum(MessageType), nullable=False, default=MessageType.TEXT)
+    message_type = Column(Enum(MessageType, native_enum=False, length=50), nullable=False, default=MessageType.TEXT)
     content = Column(Text, nullable=True) # Text content or file URL
     
     is_read = Column(Boolean, default=False, nullable=False)

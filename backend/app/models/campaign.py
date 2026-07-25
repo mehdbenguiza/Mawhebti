@@ -44,8 +44,8 @@ class Campaign(Base):
     creator_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     beneficiary_id = Column(UUID(as_uuid=True), nullable=False)
     
-    owner_type = Column(Enum(OwnerType), nullable=False)
-    beneficiary_type = Column(Enum(BeneficiaryType), nullable=False)
+    owner_type = Column(Enum(OwnerType, native_enum=False, length=50), nullable=False)
+    beneficiary_type = Column(Enum(BeneficiaryType, native_enum=False, length=50), nullable=False)
 
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
@@ -54,7 +54,7 @@ class Campaign(Base):
     # Financials
     target_amount = Column(Numeric(12, 2), nullable=False)
     current_amount = Column(Numeric(12, 2), nullable=False, default=0.00)
-    currency = Column(Enum(Currency), nullable=False, default=Currency.EUR)
+    currency = Column(Enum(Currency, native_enum=False, length=50), nullable=False, default=Currency.EUR)
     
     # Dates
     start_date = Column(DateTime(timezone=True), nullable=False)
@@ -67,9 +67,9 @@ class Campaign(Base):
     location = Column(String(255), nullable=True)
     
     # Status & Security
-    status = Column(Enum(CampaignStatus), nullable=False, default=CampaignStatus.DRAFT, index=True)
+    status = Column(Enum(CampaignStatus, native_enum=False, length=50), nullable=False, default=CampaignStatus.DRAFT, index=True)
     admin_comment = Column(Text, nullable=True)
-    verification_level = Column(Enum(CampaignVerification), nullable=False, default=CampaignVerification.UNVERIFIED)
+    verification_level = Column(Enum(CampaignVerification, native_enum=False, length=50), nullable=False, default=CampaignVerification.UNVERIFIED)
     is_featured = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
     

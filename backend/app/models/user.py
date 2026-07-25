@@ -36,8 +36,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(254), unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(Enum(UserRole), nullable=False)
-    status = Column(Enum(UserStatus), nullable=False, default=UserStatus.PENDING, index=True)
+    role = Column(Enum(UserRole, native_enum=False, length=50), nullable=False)
+    status = Column(Enum(UserStatus, native_enum=False, length=50), nullable=False, default=UserStatus.PENDING, index=True)
     is_verified = Column(Boolean, default=False, index=True)
 
     email_verified_at = Column(DateTime(timezone=True), nullable=True)

@@ -19,7 +19,7 @@ class RecruitmentRequest(Base):
     recipient_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     subject_talent_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
-    status = Column(Enum(RecruitmentRequestStatus), nullable=False, default=RecruitmentRequestStatus.PENDING)
+    status = Column(Enum(RecruitmentRequestStatus, native_enum=False, length=50), nullable=False, default=RecruitmentRequestStatus.PENDING)
     message = Column(Text, nullable=True) # Introduction message
     
     expires_at = Column(DateTime(timezone=True), nullable=True)
