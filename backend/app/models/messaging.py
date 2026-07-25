@@ -102,21 +102,62 @@ class NotificationPriority(str, enum.Enum):
     HIGH = "HIGH"
     URGENT = "URGENT"
 
+class NotificationType(str, enum.Enum):
+    VIDEO_LIKED = "VIDEO_LIKED"
+    VIDEO_COMMENTED = "VIDEO_COMMENTED"
+    VIDEO_APPROVED = "VIDEO_APPROVED"
+    VIDEO_REJECTED = "VIDEO_REJECTED"
+    NEW_MESSAGE = "NEW_MESSAGE"
+    MESSAGE_BLOCKED = "MESSAGE_BLOCKED"
+    RECRUITMENT_REQUEST = "RECRUITMENT_REQUEST"
+    RECRUITMENT_ACCEPTED = "RECRUITMENT_ACCEPTED"
+    RECRUITMENT_REJECTED = "RECRUITMENT_REJECTED"
+    RECRUITMENT_STAGE_CHANGED = "RECRUITMENT_STAGE_CHANGED"
+    TALENT_SAVED = "TALENT_SAVED"
+    DONATION_RECEIVED = "DONATION_RECEIVED"
+    CAMPAIGN_COMPLETED = "CAMPAIGN_COMPLETED"
+    CAMPAIGN_EXPIRED = "CAMPAIGN_EXPIRED"
+    PROFILE_VERIFIED = "PROFILE_VERIFIED"
+    ACCOUNT_SUSPENDED = "ACCOUNT_SUSPENDED"
+    SECURITY_ALERT = "SECURITY_ALERT"
+    PASSWORD_CHANGED = "PASSWORD_CHANGED"
+    LOGIN_NEW_DEVICE = "LOGIN_NEW_DEVICE"
+    SYSTEM = "SYSTEM"
+
 class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     recipient_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    notification_type = Column(String(100), nullable=False)
-    priority = Column(Enum(NotificationPriority), nullable=False, default=NotificationPriority.NORMAL)
+    notification_type = Column(Enum(NotificationType, native_enum=False, length=100), nullable=False)
+    priority = Column(Enum(NotificationPriority, native_enum=False, length=50), nullable=False, default=NotificationPriority.NORMAL)
     
     title = Column(String(255), nullable=False)
     body = Column(Text, nullable=False)
     link = Column(String(512), nullable=True)
     
+    is_seen = Column(Boolean, default=False, nullable=False)
     is_read = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     
     expires_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     recipient = relationship("User")
+
+
+class NotificationSettings(Base):
+    __tablename__ = "notification_settings"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    
+    likes_enabled = Column(Boolean, default=True, nullable=False)
+    messages_enabled = Column(Boolean, default=True, nullable=False)
+    recruitment_enabled = Column(Boolean, default=True, nullable=False)
+    crowdfunding_enabled = Column(Boolean, default=True, nullable=False)
+    emails_enabled = Column(Boolean, default=True, nullable=False)
+    
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    user = relationship("User")

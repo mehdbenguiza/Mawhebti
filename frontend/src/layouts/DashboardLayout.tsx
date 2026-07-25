@@ -3,6 +3,7 @@ import { NavLink, Link, useNavigate, Outlet, useLocation } from 'react-router-do
 import { useAuthStore } from '../store/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { profileService } from '../services/profile.service';
+import { NotificationDropdown } from '../components/ui/NotificationDropdown';
 
 const getNavLinks = (role: string | undefined) => {
   const links = [
@@ -242,8 +243,10 @@ export const DashboardLayout: React.FC = () => {
             </span>
           </div>
 
-          {/* Right: back to home + user chip */}
+          {/* Right: back to home + notifications + user chip */}
           <div className="flex items-center gap-3">
+            <NotificationDropdown />
+            
             <Link
               to="/"
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition-all"

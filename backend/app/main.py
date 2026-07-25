@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 # Initialize EventBus listeners AVANT d'importer le reste
 # On importe via des noms différents pour ne pas écraser la variable `app`
 import app.services.audit_service as _audit_service
-import app.services.notification_service as _notification_service
+import app.services.notification_listener as _notification_listener
 
 fastapi_app = FastAPI(
     title="Mawhebti API",

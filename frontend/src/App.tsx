@@ -10,7 +10,8 @@ import { UploadVideoPage } from './pages/dashboard/UploadVideoPage';
 import { RecruiterDashboard } from './pages/dashboard/RecruiterDashboard';
 import { ParentDashboard } from './pages/dashboard/ParentDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
-import { SetupProfilePage } from './pages/profile/SetupProfilePage';
+import { SetupProfilePage } from './pages/dashboard/SetupProfilePage';
+import { NotificationSettingsPage } from './pages/dashboard/NotificationSettingsPage';
 import { SettingsPage } from './pages/profile/SettingsPage';
 import { FeedPage } from './pages/feed/FeedPage';
 import { InboxPage } from './pages/dashboard/InboxPage';
@@ -74,6 +75,7 @@ function App() {
             <Route path="settings" element={<SettingsPage />} />
             <Route path="upload" element={<UploadVideoPage />} />
             <Route path="inbox" element={<InboxPage />} />
+            <Route path="notifications/settings" element={<NotificationSettingsPage />} />
           </Route>
 
           {/* Dashboard Recruteur */}
@@ -93,6 +95,7 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="inbox" element={<InboxPage />} />
+            <Route path="notifications/settings" element={<NotificationSettingsPage />} />
           </Route>
 
           {/* Dashboard Parent */}
@@ -112,6 +115,7 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="inbox" element={<InboxPage />} />
+            <Route path="notifications/settings" element={<NotificationSettingsPage />} />
           </Route>
 
           {/* Dashboard Root Redirection */}

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, profiles, videos, parents, recruitment, conversations, talents, dashboard
+from app.api.v1.endpoints import auth, profiles, videos, parents, recruitment, conversations, talents, dashboard, notifications
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
@@ -10,3 +10,4 @@ api_router.include_router(recruitment.router, prefix="/recruitment", tags=["recr
 api_router.include_router(conversations.router, prefix="/conversations", tags=["conversations"])
 api_router.include_router(talents.router, prefix="/talents", tags=["talents"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
