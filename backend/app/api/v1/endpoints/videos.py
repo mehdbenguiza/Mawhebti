@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.api.dependencies import get_current_user, get_optional_current_user
 from app.models.user import User, UserRole
 from app.models.video import Video, VideoStatus
+from app.services.event_bus import event_bus
 from app.schemas.video import VideoResponse, VideoViewCreate, VideoReportCreate, VideoStatsResponse
 from app.services.video_service import VideoService
 from app.models.parent_child import ParentChildLink, LinkStatus
@@ -166,6 +167,16 @@ def toggle_like_video(
         video.likes_count += 1
         action = "liked"
         liked = True
+        
+        # Déclencher la notification
+        if str(video.creator_id) != str(current_user.id):
+            event_bus.publish("video.liked", {
+                "video_owner_id": str(video.creator_id),
+                "liker_name": current_user.first_name,
+                "liker_id": str(current_user.id),
+                "video_title": video.title,
+                "video_id": str(video.id)
+            })
         
     db.commit()
     return {"action": action, "liked": liked, "likes_count": video.likes_count}

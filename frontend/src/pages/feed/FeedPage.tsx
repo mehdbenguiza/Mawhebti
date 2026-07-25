@@ -123,55 +123,11 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const url = `${window.location.origin}/feed?v=${video.id}`;
-    
-    // Méthode 1 : Web Share API (mobile natif)
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: video.title,
-          text: `Découvrez ce talent sur Mawhebti : ${video.title}`,
-          url,
-        });
-        return;
-      } catch (e) {
-        if ((e as Error).name !== 'AbortError') console.warn('Web Share failed, trying clipboard');
-        else return; // L'utilisateur a annulé
-      }
-    }
-    
-    // Méthode 2 : Clipboard API (HTTPS)
-    if (navigator.clipboard && window.isSecureContext) {
-      try {
-        await navigator.clipboard.writeText(url);
-        setShareToast(true);
-        setTimeout(() => setShareToast(false), 3000);
-        return;
-      } catch (e) {
-        console.warn('Clipboard API failed, trying execCommand');
-      }
-    }
-    
-    // Méthode 3 : execCommand (legacy, fonctionne sur HTTP)
-    const textarea = document.createElement('textarea');
-    textarea.value = url;
-    textarea.style.position = 'fixed';
-    textarea.style.top = '-9999px';
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    try {
-      document.execCommand('copy');
-      setShareToast(true);
-      setTimeout(() => setShareToast(false), 3000);
-    } catch (e) {
-      // Méthode 4 : Modal manuelle
-      setShareUrl(url);
-      setShowShareModal(true);
-    } finally {
-      document.body.removeChild(textarea);
-    }
+    setShareUrl(url);
+    setShowShareModal(true);
   };
 
   const handleReport = async () => {
@@ -509,42 +465,97 @@ const VideoPlayer: React.FC<{ video: VideoFeedResponse; isActive: boolean }> = (
         </div>
       )}
 
-      {/* Share Modal (fallback manuel) */}
+      {/* Share Modal */}
       {showShareModal && (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-[#13131a] border border-white/10 rounded-2xl p-6 w-full max-w-sm text-white shadow-2xl">
-            <h3 className="text-xl font-bold mb-2">Partager cette vidéo</h3>
-            <p className="text-sm text-gray-400 mb-4">Copiez ce lien et partagez-le :</p>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-3">
-              <input
-                readOnly
-                value={shareUrl}
-                className="flex-1 bg-transparent text-sm text-gray-200 outline-none"
-                onFocus={(e) => e.target.select()}
-              />
-              <button
-                onClick={() => {
-                  const el = document.createElement('textarea');
-                  el.value = shareUrl;
-                  document.body.appendChild(el);
-                  el.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(el);
-                  setShareToast(true);
-                  setShowShareModal(false);
-                  setTimeout(() => setShareToast(false), 3000);
-                }}
-                className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-lg transition-colors"
-              >
-                Copier
-              </button>
-            </div>
-            <button
-              onClick={() => setShowShareModal(false)}
-              className="w-full mt-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-semibold rounded-xl transition-colors"
+          <div className="bg-[#13131a] border border-white/10 rounded-3xl p-6 w-full max-w-sm text-white shadow-2xl relative">
+            <button 
+              onClick={(e) => { e.stopPropagation(); setShowShareModal(false); }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
             >
-              Fermer
+              ✕
             </button>
+            <h3 className="text-xl font-bold mb-6 text-center font-outfit">Partager cette vidéo</h3>
+            
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <a 
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} 
+                target="_blank" rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#1877F2] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="text-white font-bold text-xl">f</span>
+                </div>
+                <span className="text-[10px] text-gray-400">Facebook</span>
+              </a>
+              
+              <a 
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent('Découvrez ce talent sur Mawhebti : ' + shareUrl)}`} 
+                target="_blank" rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824z"/></svg>
+                </div>
+                <span className="text-[10px] text-gray-400">WhatsApp</span>
+              </a>
+
+              <a 
+                href={`fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`} 
+                target="_blank" rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#00c6ff] to-[#0072ff] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.25c0 2.877 1.455 5.441 3.734 7.112v3.388c0 .285.316.452.553.303l3.356-2.106c.756.208 1.554.321 2.357.321 5.523 0 10-4.145 10-9.25S17.523 2 12 2zm1.093 12.35l-2.42-2.583-4.717 2.583 5.187-5.503 2.457 2.584 4.679-2.584-5.186 5.503z"/></svg>
+                </div>
+                <span className="text-[10px] text-gray-400">Messenger</span>
+              </a>
+
+              <a 
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Découvrez ce talent sur Mawhebti !')}`} 
+                target="_blank" rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="w-12 h-12 rounded-full bg-black border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="text-white font-bold text-xl">X</span>
+                </div>
+                <span className="text-[10px] text-gray-400">X (Twitter)</span>
+              </a>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-xs text-center text-gray-400 mb-3">Pour Instagram ou TikTok, copiez le lien :</p>
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-2">
+                <input
+                  readOnly
+                  value={shareUrl}
+                  className="flex-1 bg-transparent text-xs text-gray-300 outline-none pl-2 truncate"
+                  onFocus={(e) => e.target.select()}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const el = document.createElement('textarea');
+                    el.value = shareUrl;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                    setShareToast(true);
+                    setShowShareModal(false);
+                    setTimeout(() => setShareToast(false), 3000);
+                  }}
+                  className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap"
+                >
+                  Copier
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
