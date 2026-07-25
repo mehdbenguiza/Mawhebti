@@ -17,6 +17,8 @@ import { FeedPage } from './pages/feed/FeedPage';
 import { InboxPage } from './pages/dashboard/InboxPage';
 import { ExplorePage } from './pages/explore/ExplorePage';
 import { PublicProfilePage } from './pages/profile/PublicProfilePage';
+import { CrowdfundingDashboard } from './pages/dashboard/CrowdfundingDashboard';
+import { CampaignCheckoutPage } from './pages/explore/CampaignCheckoutPage';
 import LandingPage from './pages/LandingPage';
 import { useAuthStore } from './store/authStore';
 
@@ -56,6 +58,7 @@ function App() {
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/talents/:id" element={<PublicProfilePage />} />
+          <Route path="/campaigns/:id/donate" element={<CampaignCheckoutPage />} />
 
           {/* Dashboard Talent (Majeur et Mineur) */}
           <Route
@@ -76,6 +79,7 @@ function App() {
             <Route path="upload" element={<UploadVideoPage />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="notifications/settings" element={<NotificationSettingsPage />} />
+            <Route path="crowdfunding" element={<CrowdfundingDashboard />} />
           </Route>
 
           {/* Dashboard Recruteur */}
@@ -116,6 +120,7 @@ function App() {
             <Route path="settings" element={<SettingsPage />} />
             <Route path="inbox" element={<InboxPage />} />
             <Route path="notifications/settings" element={<NotificationSettingsPage />} />
+            <Route path="crowdfunding" element={<CrowdfundingDashboard />} />
           </Route>
 
           {/* Dashboard Root Redirection */}
