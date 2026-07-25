@@ -28,6 +28,32 @@ export enum NotificationPriority {
     URGENT = "URGENT"
 }
 
+export enum NotificationCategory {
+    SOCIAL = "SOCIAL",
+    RECRUITMENT = "RECRUITMENT",
+    SECURITY = "SECURITY",
+    ADMINISTRATION = "ADMINISTRATION",
+    CROWDFUNDING = "CROWDFUNDING"
+}
+
+export enum NotificationAction {
+    OPEN = "OPEN",
+    ACCEPT = "ACCEPT",
+    DECLINE = "DECLINE",
+    PAY = "PAY",
+    VIEW = "VIEW",
+    NONE = "NONE"
+}
+
+export enum EntityType {
+    VIDEO = "VIDEO",
+    MESSAGE = "MESSAGE",
+    RECRUITMENT = "RECRUITMENT",
+    PROFILE = "PROFILE",
+    CAMPAIGN = "CAMPAIGN",
+    SYSTEM = "SYSTEM"
+}
+
 export interface Notification {
     id: string;
     recipient_id: string;
@@ -36,6 +62,13 @@ export interface Notification {
     title: string;
     body: string;
     link?: string;
+    category: NotificationCategory;
+    entity_type?: EntityType;
+    entity_id?: string;
+    action_type: NotificationAction;
+    created_by?: string;
+    channels_sent: Record<string, boolean>;
+    payload: Record<string, any>;
     is_seen: boolean;
     is_read: boolean;
     is_deleted: boolean;
@@ -48,6 +81,14 @@ export interface NotificationListResponse {
     total: number;
     page: number;
     size: number;
+}
+
+export interface NotificationSummary {
+    total: number;
+    unread: number;
+    unseen: number;
+    high_priority: number;
+    urgent: number;
 }
 
 export interface NotificationSettings {

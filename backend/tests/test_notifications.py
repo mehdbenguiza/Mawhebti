@@ -61,7 +61,7 @@ def test_soft_delete_notification(client: TestClient, authorized_client: TestCli
     list_response = authorized_client.get("/api/v1/notifications")
     assert list_response.json()["total"] == 0
 
-def test_get_unread_count(client: TestClient, authorized_client: TestClient, db_session: Session, test_user):
+def test_get_summary(client: TestClient, authorized_client: TestClient, db_session: Session, test_user):
     notif = Notification(
         recipient_id=test_user.id,
         notification_type=NotificationType.SYSTEM,
@@ -71,9 +71,10 @@ def test_get_unread_count(client: TestClient, authorized_client: TestClient, db_
     db_session.add(notif)
     db_session.commit()
 
-    response = authorized_client.get("/api/v1/notifications/unread-count")
+    response = authorized_client.get("/api/v1/notifications/summary")
     assert response.status_code == 200
-    assert response.json()["unread_count"] == 1
+    assert response.json()["unread"] == 1
+    assert response.json()["total"] == 1
 
 def test_mark_all_as_seen(client: TestClient, authorized_client: TestClient, db_session: Session, test_user):
     notif = Notification(

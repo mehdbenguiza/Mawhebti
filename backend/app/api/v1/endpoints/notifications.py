@@ -7,7 +7,11 @@ from app.core.database import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.services.notification_service import NotificationService
-from app.schemas.notification import NotificationListResponse, NotificationResponse, NotificationSettingsResponse, NotificationSettingsBase
+from app.schemas.notification import (
+    NotificationListResponse, NotificationResponse, 
+    NotificationSettingsResponse, NotificationSettingsBase,
+    NotificationSummaryResponse
+)
 
 router = APIRouter()
 
@@ -26,13 +30,13 @@ def get_notifications(
         size=size
     )
 
-@router.get("/unread-count")
-def get_unread_count(
+@router.get("/summary", response_model=NotificationSummaryResponse)
+def get_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    count = NotificationService.get_unread_count(db, current_user.id)
-    return {"unread_count": count}
+    summary = NotificationService.get_summary(db, current_user.id)
+    return summary
 
 @router.put("/seen")
 def mark_all_as_seen(

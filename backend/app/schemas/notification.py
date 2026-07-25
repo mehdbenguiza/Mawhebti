@@ -1,8 +1,11 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from uuid import UUID
-from app.models.messaging import NotificationType, NotificationPriority
+from app.models.messaging import (
+    NotificationType, NotificationPriority, NotificationCategory,
+    NotificationAction, EntityType
+)
 
 class NotificationBase(BaseModel):
     title: str
@@ -10,6 +13,13 @@ class NotificationBase(BaseModel):
     link: Optional[str] = None
     notification_type: NotificationType
     priority: NotificationPriority
+    category: NotificationCategory
+    entity_type: Optional[EntityType] = None
+    entity_id: Optional[UUID] = None
+    action_type: NotificationAction = NotificationAction.NONE
+    created_by: Optional[UUID] = None
+    channels_sent: Dict[str, Any] = {}
+    payload: Dict[str, Any] = {}
 
 class NotificationResponse(NotificationBase):
     id: UUID
@@ -27,6 +37,13 @@ class NotificationListResponse(BaseModel):
     total: int
     page: int
     size: int
+
+class NotificationSummaryResponse(BaseModel):
+    total: int
+    unread: int
+    unseen: int
+    high_priority: int
+    urgent: int
 
 class NotificationSettingsBase(BaseModel):
     likes_enabled: bool = True

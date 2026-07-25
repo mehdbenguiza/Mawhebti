@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Enum, func, Integer, Boolean, JSON
+from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Enum, func, Integer, Boolean, JSON, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -102,6 +102,35 @@ class NotificationPriority(str, enum.Enum):
     HIGH = "HIGH"
     URGENT = "URGENT"
 
+class NotificationCategory(str, enum.Enum):
+    SOCIAL = "SOCIAL"
+    RECRUITMENT = "RECRUITMENT"
+    SECURITY = "SECURITY"
+    ADMINISTRATION = "ADMINISTRATION"
+    CROWDFUNDING = "CROWDFUNDING"
+
+class NotificationAction(str, enum.Enum):
+    OPEN = "OPEN"
+    ACCEPT = "ACCEPT"
+    DECLINE = "DECLINE"
+    PAY = "PAY"
+    VIEW = "VIEW"
+    NONE = "NONE"
+
+class NotificationChannel(str, enum.Enum):
+    IN_APP = "IN_APP"
+    EMAIL = "EMAIL"
+    PUSH = "PUSH"
+    SMS = "SMS"
+
+class EntityType(str, enum.Enum):
+    VIDEO = "VIDEO"
+    MESSAGE = "MESSAGE"
+    RECRUITMENT = "RECRUITMENT"
+    PROFILE = "PROFILE"
+    CAMPAIGN = "CAMPAIGN"
+    SYSTEM = "SYSTEM"
+
 class NotificationType(str, enum.Enum):
     VIDEO_LIKED = "VIDEO_LIKED"
     VIDEO_COMMENTED = "VIDEO_COMMENTED"
@@ -126,11 +155,25 @@ class NotificationType(str, enum.Enum):
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        Index("ix_notifications_recipient_status_date", "recipient_id", "is_read", "is_seen", "created_at"),
+        Index("ix_notifications_entity", "entity_type", "entity_id"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     recipient_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     notification_type = Column(Enum(NotificationType, native_enum=False, length=100), nullable=False)
     priority = Column(Enum(NotificationPriority, native_enum=False, length=50), nullable=False, default=NotificationPriority.NORMAL)
+    category = Column(Enum(NotificationCategory, native_enum=False, length=50), nullable=False, default=NotificationCategory.SOCIAL)
+    
+    entity_type = Column(Enum(EntityType, native_enum=False, length=50), nullable=True)
+    entity_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    
+    action_type = Column(Enum(NotificationAction, native_enum=False, length=50), nullable=False, default=NotificationAction.NONE)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    channels_sent = Column(JSON, default=dict) # {"IN_APP": True, "EMAIL": False, "PUSH": False}
+    payload = Column(JSON, default=dict) # {"actors": [], "actor_ids": [], "actors_count": 0}
     
     title = Column(String(255), nullable=False)
     body = Column(Text, nullable=False)

@@ -1,7 +1,8 @@
 import logging
+from uuid import UUID
 from app.services.event_bus import event_bus
 from app.services.notification_service import NotificationService
-from app.models.messaging import NotificationType
+from app.models.messaging import NotificationType, EntityType, NotificationAction
 from app.core.database import SessionLocal
 
 logger = logging.getLogger(__name__)
@@ -11,21 +12,29 @@ def handle_video_liked(event_data: dict):
     try:
         recipient_id = event_data.get('video_owner_id')
         liker_name = event_data.get('liker_name', 'Quelqu\'un')
+        liker_id = event_data.get('liker_id')
         video_title = event_data.get('video_title', 'votre vidéo')
         video_id = event_data.get('video_id')
         
-        # Le service va faire le regroupement automatiquement si nécessaire
+        # Le service va faire le regroupement et formater "Ali et 2 autres ont aimé..."
         title = "Nouveau Like ❤️"
-        body = f"{liker_name} a aimé votre vidéo : {video_title}"
-        link = f"/dashboard/videos/{video_id}"
+        base_body = f"aimé votre vidéo : {video_title}" # Sera préfixé par "Ali a" ou "Ali et Sarah ont"
+        
+        # Redirection vers le profil public du talent où sont affichées ses vidéos
+        link = f"/talents/{recipient_id}"
 
         NotificationService.create_notification(
             db=db,
             recipient_id=recipient_id,
             notification_type=NotificationType.VIDEO_LIKED,
             title=title,
-            body=body,
-            link=link
+            body=base_body,
+            link=link,
+            entity_type=EntityType.VIDEO,
+            entity_id=video_id,
+            actor_id=liker_id,
+            actor_name=liker_name,
+            action_type=NotificationAction.VIEW
         )
     except Exception as e:
         logger.error(f"Error handling video.liked event: {e}")
@@ -38,9 +47,10 @@ def handle_talent_saved(event_data: dict):
     try:
         recipient_id = event_data.get('talent_id')
         recruiter_name = event_data.get('recruiter_name', 'Un recruteur')
+        recruiter_id = event_data.get('recruiter_id')
         
         title = "Nouveau Favori ⭐"
-        body = f"{recruiter_name} vous a ajouté à ses favoris."
+        base_body = "vous a ajouté à ses favoris."
         link = "/dashboard"
 
         NotificationService.create_notification(
@@ -48,8 +58,13 @@ def handle_talent_saved(event_data: dict):
             recipient_id=recipient_id,
             notification_type=NotificationType.TALENT_SAVED,
             title=title,
-            body=body,
-            link=link
+            body=base_body,
+            link=link,
+            entity_type=EntityType.PROFILE,
+            entity_id=recipient_id,
+            actor_id=recruiter_id,
+            actor_name=recruiter_name,
+            action_type=NotificationAction.VIEW
         )
     except Exception as e:
         logger.error(f"Error handling talent.saved event: {e}")

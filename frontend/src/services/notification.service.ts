@@ -1,5 +1,5 @@
 import api from './api';
-import { Notification, NotificationListResponse, NotificationSettings } from '../types/notification';
+import { Notification, NotificationListResponse, NotificationSettings, NotificationSummary } from '../types/notification';
 
 class NotificationService {
     async getNotifications(page: number = 1, size: number = 20): Promise<NotificationListResponse> {
@@ -7,9 +7,9 @@ class NotificationService {
         return response.data;
     }
 
-    async getUnreadCount(): Promise<number> {
-        const response = await api.get('/notifications/unread-count');
-        return response.data.unread_count;
+    async getSummary(): Promise<NotificationSummary> {
+        const response = await api.get('/notifications/summary');
+        return response.data;
     }
 
     async markAllAsSeen(): Promise<void> {
