@@ -4,7 +4,7 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import SecurityIcon from '@mui/icons-material/Security';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { api } from '../../lib/api';
+import api from '../../services/api';
 
 export function CampaignCheckoutPage() {
   const { id } = useParams<{ id: string }>();
