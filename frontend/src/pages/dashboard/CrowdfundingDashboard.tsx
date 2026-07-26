@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Coins, TrendingUp, Users, Clock, AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import GroupIcon from '@mui/icons-material/Group';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import WarningIcon from '@mui/icons-material/Warning';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { api } from '../../lib/api';
 
 interface CampaignData {
@@ -89,7 +95,7 @@ export function CrowdfundingDashboard() {
           onClick={() => navigate('/dashboard/campaigns/new')}
           className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-medium hover:opacity-90 transition-opacity flex items-center space-x-2"
         >
-          <Coins className="w-5 h-5" />
+          <MonetizationOnIcon className="w-5 h-5" />
           <span>Créer une campagne</span>
         </button>
       </div>
@@ -99,7 +105,7 @@ export function CrowdfundingDashboard() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-purple-500/20 rounded-xl">
-              <Coins className="w-6 h-6 text-purple-400" />
+              <MonetizationOnIcon className="w-6 h-6 text-purple-400" />
             </div>
             <span className="text-sm font-medium text-purple-400">Total Récolté</span>
           </div>
@@ -110,7 +116,7 @@ export function CrowdfundingDashboard() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-blue-500/20 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-blue-400" />
+              <TrendingUpIcon className="w-6 h-6 text-blue-400" />
             </div>
             <span className="text-sm font-medium text-blue-400">Progression</span>
           </div>
@@ -126,7 +132,7 @@ export function CrowdfundingDashboard() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-green-500/20 rounded-xl">
-              <Users className="w-6 h-6 text-green-400" />
+              <GroupIcon className="w-6 h-6 text-green-400" />
             </div>
             <span className="text-sm font-medium text-green-400">Donateurs</span>
           </div>
@@ -137,7 +143,7 @@ export function CrowdfundingDashboard() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-orange-500/20 rounded-xl">
-              <Coins className="w-6 h-6 text-orange-400" />
+              <MonetizationOnIcon className="w-6 h-6 text-orange-400" />
             </div>
             <span className="text-sm font-medium text-orange-400">Don Moyen</span>
           </div>
@@ -157,13 +163,13 @@ export function CrowdfundingDashboard() {
                   <h3 className="text-lg font-bold text-white">{campaign.title}</h3>
                   {campaign.status === 'ACTIVE' && (
                     <span className="flex items-center px-3 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full border border-green-500/30">
-                      <CheckCircle className="w-3 h-3 mr-1" />
+                      <CheckCircleIcon className="w-3 h-3 mr-1" />
                       ACTIVE
                     </span>
                   )}
                   {campaign.status === 'PENDING_REVIEW' && (
                     <span className="flex items-center px-3 py-1 bg-orange-500/20 text-orange-400 text-xs font-medium rounded-full border border-orange-500/30">
-                      <Clock className="w-3 h-3 mr-1" />
+                      <AccessTimeIcon className="w-3 h-3 mr-1" />
                       EN REVUE
                     </span>
                   )}
@@ -189,7 +195,7 @@ export function CrowdfundingDashboard() {
                 </button>
                 {campaign.status === 'ACTIVE' && (
                   <button className="py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center">
-                    <ExternalLink className="w-4 h-4" />
+                    <OpenInNewIcon className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -206,7 +212,7 @@ export function CrowdfundingDashboard() {
       {/* Sécurité Notice */}
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 flex items-start space-x-4">
         <div className="p-2 bg-blue-500/20 rounded-lg shrink-0">
-          <AlertTriangle className="w-6 h-6 text-blue-400" />
+          <WarningIcon className="w-6 h-6 text-blue-400" />
         </div>
         <div>
           <h4 className="text-blue-400 font-bold mb-1">Architecture Zero Trust & Idempotente</h4>

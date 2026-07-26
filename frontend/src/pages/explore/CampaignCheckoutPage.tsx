@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CreditCard, ShieldCheck, Heart, AlertCircle } from 'lucide-react';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import SecurityIcon from '@mui/icons-material/Security';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { api } from '../../lib/api';
 
 export function CampaignCheckoutPage() {
@@ -47,7 +50,7 @@ export function CampaignCheckoutPage() {
           
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-purple-500/20 rounded-full">
-              <Heart className="w-8 h-8 text-purple-400" />
+              <FavoriteIcon className="w-8 h-8 text-purple-400" />
             </div>
           </div>
           
@@ -94,7 +97,7 @@ export function CampaignCheckoutPage() {
 
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start space-x-3 text-red-400">
-              <AlertCircle className="w-5 h-5 shrink-0" />
+              <ErrorOutlineIcon className="w-5 h-5 shrink-0" />
               <p className="text-sm">{error}</p>
             </div>
           )}
@@ -108,14 +111,14 @@ export function CampaignCheckoutPage() {
               <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
               <>
-                <CreditCard className="w-5 h-5" />
+                <CreditCardIcon className="w-5 h-5" />
                 <span>Payer {(customAmount ? parseFloat(customAmount) : amount) || 0} €</span>
               </>
             )}
           </button>
 
           <div className="mt-6 flex items-center justify-center space-x-2 text-sm text-gray-500">
-            <ShieldCheck className="w-4 h-4 text-green-500" />
+            <SecurityIcon className="w-4 h-4 text-green-500" />
             <span>Paiement 100% sécurisé via Stripe Webhooks</span>
           </div>
         </div>
