@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.event_bus import event_bus
+from app.services.event_bus import event_bus
 from app.services.payment import get_payment_provider
 from app.repositories.financial_repository import FinancialRepository
 from app.models.financial import PaymentIntentStatus

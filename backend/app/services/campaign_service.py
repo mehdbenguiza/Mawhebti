@@ -11,7 +11,7 @@ from app.models.campaign import (
 from app.models.user import User, UserRole, UserVerificationLevel
 from app.models.parent_child import ParentChildLink, LinkStatus
 from app.repositories.campaign_repository import CampaignRepository
-from app.core.event_bus import event_bus
+from app.services.event_bus import event_bus
 
 class CampaignService:
     def __init__(self, db: Session):
