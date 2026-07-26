@@ -18,7 +18,7 @@ export function CampaignCheckoutPage() {
     const finalAmount = customAmount ? parseFloat(customAmount) : amount;
     
     if (!finalAmount || finalAmount < 10) {
-      setError("Le montant minimum est de 10 €");
+      setError("Le montant minimum est de 10 euros");
       return;
     }
 
@@ -32,13 +32,12 @@ export function CampaignCheckoutPage() {
       });
       
       if (response.data && response.data.checkout_url) {
-        // Redirect to Stripe Checkout
         window.location.href = response.data.checkout_url;
       } else {
-        throw new Error("Erreur lors de l'initialisation du paiement");
+        throw new Error("Erreur d'initialisation du paiement");
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Une erreur est survenue lors de la préparation du paiement sécurisé.");
+      setError(err.response?.data?.detail || "Erreur de paiement");
       setLoading(false);
     }
   };
@@ -59,7 +58,6 @@ export function CampaignCheckoutPage() {
             Soutenez ce talent dans la réalisation de son objectif.
           </p>
 
-          {/* Preset Amounts */}
           <div className="grid grid-cols-3 gap-3 mb-4">
             {[20, 50, 100].map((preset) => (
               <button

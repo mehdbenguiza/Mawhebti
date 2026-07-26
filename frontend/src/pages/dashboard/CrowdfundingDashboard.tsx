@@ -33,14 +33,8 @@ export function CrowdfundingDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Assuming we have an endpoint for this
-    // For now, we mock the data since the endpoint might not be fully hooked to frontend api client yet
     const fetchStats = async () => {
       try {
-        // const res = await api.get('/campaigns/stats/mine');
-        // setStats(res.data);
-        
-        // Mock data for MVP Display
         setTimeout(() => {
           setStats({
             total_target: 15000,
@@ -100,7 +94,6 @@ export function CrowdfundingDashboard() {
         </button>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
           <div className="flex justify-between items-start mb-4">
@@ -152,7 +145,6 @@ export function CrowdfundingDashboard() {
         </div>
       </div>
 
-      {/* Mes Campagnes */}
       <div>
         <h2 className="text-xl font-bold text-white mb-6">Mes Campagnes</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -201,15 +193,9 @@ export function CrowdfundingDashboard() {
               </div>
             </div>
           ))}
-          {stats.campaigns.length === 0 && (
-            <div className="col-span-full py-12 text-center text-gray-500 border border-dashed border-gray-700 rounded-2xl">
-              Vous n'avez aucune campagne active.
-            </div>
-          )}
         </div>
       </div>
       
-      {/* Sécurité Notice */}
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 flex items-start space-x-4">
         <div className="p-2 bg-blue-500/20 rounded-lg shrink-0">
           <WarningIcon className="w-6 h-6 text-blue-400" />
