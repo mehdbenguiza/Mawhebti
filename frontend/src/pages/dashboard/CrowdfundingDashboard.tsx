@@ -86,7 +86,7 @@ export function CrowdfundingDashboard() {
           <p className="text-gray-400">Gérez vos campagnes de financement participatif en toute sécurité.</p>
         </div>
         <button 
-          onClick={() => navigate('/dashboard/campaigns/new')}
+          onClick={() => navigate('../campaigns/new')}
           className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-medium hover:opacity-90 transition-opacity flex items-center space-x-2"
         >
           <MonetizationOnIcon className="w-5 h-5" />

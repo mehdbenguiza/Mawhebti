@@ -18,6 +18,7 @@ import { InboxPage } from './pages/dashboard/InboxPage';
 import { ExplorePage } from './pages/explore/ExplorePage';
 import { PublicProfilePage } from './pages/profile/PublicProfilePage';
 import { CrowdfundingDashboard } from './pages/dashboard/CrowdfundingDashboard';
+import { CampaignCreatePage } from './pages/dashboard/CampaignCreatePage';
 import { CampaignCheckoutPage } from './pages/explore/CampaignCheckoutPage';
 import LandingPage from './pages/LandingPage';
 import { useAuthStore } from './store/authStore';
@@ -80,6 +81,7 @@ function App() {
             <Route path="inbox" element={<InboxPage />} />
             <Route path="notifications/settings" element={<NotificationSettingsPage />} />
             <Route path="crowdfunding" element={<CrowdfundingDashboard />} />
+            <Route path="campaigns/new" element={<CampaignCreatePage />} />
           </Route>
 
           {/* Dashboard Recruteur */}
@@ -121,6 +123,7 @@ function App() {
             <Route path="inbox" element={<InboxPage />} />
             <Route path="notifications/settings" element={<NotificationSettingsPage />} />
             <Route path="crowdfunding" element={<CrowdfundingDashboard />} />
+            <Route path="campaigns/new" element={<CampaignCreatePage />} />
           </Route>
 
           {/* Dashboard Root Redirection */}
