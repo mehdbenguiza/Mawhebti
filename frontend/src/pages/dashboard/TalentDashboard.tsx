@@ -244,7 +244,80 @@ export const TalentDashboard: React.FC = () => {
         )}
       </section>
 
+
+      {/* Actions Rapides */}
+      <section>
+        <h3 className="text-lg font-black text-white mb-4" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          ⚡ Actions Rapides
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Crowdfunding */}
+          <Link
+            to="/dashboard/crowdfunding"
+            className="group relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-600/20 to-blue-600/10 p-6 hover:border-purple-500/60 hover:from-purple-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-purple-500/30 rounded-xl text-2xl">💰</div>
+              <span className="text-xs font-bold px-2 py-1 bg-purple-500/20 text-purple-300 rounded-lg border border-purple-500/30">
+                NOUVEAU
+              </span>
+            </div>
+            <h4 className="text-white font-black text-base mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              Finance & Crowdfunding
+            </h4>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Créez et gérez vos campagnes de financement participatif. Suivez vos dons en temps réel.
+            </p>
+            <div className="mt-4 flex items-center gap-2 text-purple-400 text-xs font-bold group-hover:gap-3 transition-all">
+              <span>Accéder au tableau de bord</span>
+              <span>→</span>
+            </div>
+          </Link>
+
+          {/* Uploader une vidéo */}
+          <Link
+            to="/dashboard/upload"
+            className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 to-teal-600/10 p-6 hover:border-blue-500/60 hover:from-blue-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-blue-500/30 rounded-xl text-2xl">🎬</div>
+            </div>
+            <h4 className="text-white font-black text-base mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              Publier une Vidéo
+            </h4>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Partagez votre talent avec le monde. Uploadez une nouvelle vidéo dès maintenant.
+            </p>
+            <div className="mt-4 flex items-center gap-2 text-blue-400 text-xs font-bold group-hover:gap-3 transition-all">
+              <span>Uploader une vidéo</span>
+              <span>→</span>
+            </div>
+          </Link>
+
+          {/* Messages */}
+          <Link
+            to="/dashboard/inbox"
+            className="group relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-600/20 to-green-600/10 p-6 hover:border-teal-500/60 hover:from-teal-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-teal-500/30 rounded-xl text-2xl">💬</div>
+            </div>
+            <h4 className="text-white font-black text-base mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              Mes Messages
+            </h4>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Consultez vos échanges avec les recruteurs et votre réseau.
+            </p>
+            <div className="mt-4 flex items-center gap-2 text-teal-400 text-xs font-bold group-hover:gap-3 transition-all">
+              <span>Ouvrir la messagerie</span>
+              <span>→</span>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* Conseils IA */}
+
       <section>
         <h3 className="text-lg font-black text-white mb-4" style={{ fontFamily: "'Outfit', sans-serif" }}>
           🤖 Conseils IA

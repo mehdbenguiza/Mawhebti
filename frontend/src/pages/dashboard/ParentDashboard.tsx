@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parentService } from '../../services/parent.service';
 
@@ -66,6 +67,43 @@ export const ParentDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <StatCard icon="🔔" label="Demandes en attente" value={requests?.length?.toString() || "0"} color="orange" />
+      </div>
+
+      {/* Actions Rapides */}
+      <div>
+        <h3 className="text-lg font-black text-white mb-4" style={{ fontFamily: "'Outfit', sans-serif" }}>⚡ Actions Rapides</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link
+            to="/dashboard/crowdfunding"
+            className="group relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-600/20 to-blue-600/10 p-6 hover:border-purple-500/60 hover:from-purple-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-purple-500/30 rounded-xl text-2xl">💰</div>
+              <span className="text-xs font-bold px-2 py-1 bg-purple-500/20 text-purple-300 rounded-lg border border-purple-500/30">NOUVEAU</span>
+            </div>
+            <h4 className="text-white font-black text-base mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Finance & Crowdfunding</h4>
+            <p className="text-gray-400 text-sm leading-relaxed">Suivez les campagnes de financement de votre enfant. Contrôlez les fonds en toute sécurité.</p>
+            <div className="mt-4 flex items-center gap-2 text-purple-400 text-xs font-bold group-hover:gap-3 transition-all">
+              <span>Voir le tableau de bord</span>
+              <span>→</span>
+            </div>
+          </Link>
+
+          <Link
+            to="/dashboard/inbox"
+            className="group relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-600/20 to-green-600/10 p-6 hover:border-teal-500/60 hover:from-teal-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-teal-500/30 rounded-xl text-2xl">💬</div>
+            </div>
+            <h4 className="text-white font-black text-base mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Mes Messages</h4>
+            <p className="text-gray-400 text-sm leading-relaxed">Consultez vos échanges avec les recruteurs et la plateforme.</p>
+            <div className="mt-4 flex items-center gap-2 text-teal-400 text-xs font-bold group-hover:gap-3 transition-all">
+              <span>Ouvrir la messagerie</span>
+              <span>→</span>
+            </div>
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl border border-white/10 p-6 sm:p-8 mt-8">
