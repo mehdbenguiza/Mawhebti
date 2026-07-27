@@ -253,7 +253,7 @@ export const TalentDashboard: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Crowdfunding */}
           <Link
-            to="/dashboard/crowdfunding"
+            to="../crowdfunding"
             className="group relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-600/20 to-blue-600/10 p-6 hover:border-purple-500/60 hover:from-purple-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
           >
             <div className="flex items-start justify-between mb-4">
@@ -276,7 +276,7 @@ export const TalentDashboard: React.FC = () => {
 
           {/* Uploader une vidéo */}
           <Link
-            to="/dashboard/upload"
+            to="../upload"
             className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 to-teal-600/10 p-6 hover:border-blue-500/60 hover:from-blue-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
           >
             <div className="flex items-start justify-between mb-4">
@@ -296,7 +296,7 @@ export const TalentDashboard: React.FC = () => {
 
           {/* Messages */}
           <Link
-            to="/dashboard/inbox"
+            to="../inbox"
             className="group relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-600/20 to-green-600/10 p-6 hover:border-teal-500/60 hover:from-teal-600/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
           >
             <div className="flex items-start justify-between mb-4">
