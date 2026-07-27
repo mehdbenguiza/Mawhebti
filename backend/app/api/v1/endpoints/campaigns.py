@@ -5,7 +5,7 @@ from uuid import UUID
 from typing import List, Dict, Any
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.api.dependencies import get_current_user
 from app.models.user import User, UserRole
 from app.models.campaign import Campaign, CampaignStatus
 from app.services.campaign_service import CampaignService

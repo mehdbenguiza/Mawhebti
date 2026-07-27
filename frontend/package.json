@@ -44,6 +44,9 @@
   "optionalDependencies": {
     "@rolldown/binding-linux-x64-musl": "*",
     "@rolldown/binding-linux-x64-gnu": "*",
-    "@rolldown/binding-win32-x64-msvc": "*"
+    "@rolldown/binding-win32-x64-msvc": "*",
+    "@oxlint/binding-linux-x64-gnu": "*",
+    "@oxlint/binding-linux-x64-musl": "*",
+    "@oxlint/binding-win32-x64-msvc": "*"
   }
 }
