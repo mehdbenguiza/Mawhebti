@@ -47,6 +47,9 @@
     "@rolldown/binding-win32-x64-msvc": "*",
     "@oxlint/binding-linux-x64-gnu": "*",
     "@oxlint/binding-linux-x64-musl": "*",
-    "@oxlint/binding-win32-x64-msvc": "*"
+    "@oxlint/binding-win32-x64-msvc": "*",
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@rollup/rollup-linux-x64-musl": "*",
+    "@rollup/rollup-win32-x64-msvc": "*"
   }
 }
