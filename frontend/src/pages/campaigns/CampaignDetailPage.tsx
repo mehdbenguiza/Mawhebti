@@ -53,15 +53,6 @@ export const CampaignDetailPage: React.FC = () => {
     enabled: activeTab === 'comments' && !!id
   });
 
-  const { data: inviteLink } = useQuery({
-    queryKey: ['campaign-invite', id],
-    queryFn: async () => {
-      const { data } = await api.get(`/campaigns/${id}/invite-link`);
-      return data;
-    },
-    enabled: showShareModal && campaign?.is_creator
-  });
-
   const postCommentMutation = useMutation({
     mutationFn: (content: string) => api.post(`/campaigns/${id}/comment`, { content }),
     onSuccess: () => {
@@ -78,9 +69,51 @@ export const CampaignDetailPage: React.FC = () => {
     }
   });
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert('Lien copié !');
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    alert('✅ Lien copié !');
+  };
+
+  const handlePublish = async () => {
+    try {
+      await api.post(`/campaigns/${id}/publish`);
+      queryClient.invalidateQueries({ queryKey: ['campaign', id] });
+      alert('✅ Campagne soumise pour révision !');
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Erreur lors de la soumission.');
+    }
+  };
+
+  const handlePause = async () => {
+    try {
+      await api.post(`/campaigns/${id}/pause`);
+      queryClient.invalidateQueries({ queryKey: ['campaign', id] });
+      alert('⏸ Campagne mise en pause.');
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Erreur.');
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!window.confirm('Confirmer l’annulation de cette campagne ?')) return;
+    try {
+      await api.post(`/campaigns/${id}/cancel`);
+      queryClient.invalidateQueries({ queryKey: ['campaign', id] });
+      alert('Campagne annulée.');
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Erreur.');
+    }
+  };
+
+  const handleGetInviteLink = async () => {
+    try {
+      const { data } = await api.get(`/campaigns/${id}/invite-link`);
+      const url = `${window.location.origin}/campaigns/join/${data.invite_code}`;
+      await navigator.clipboard.writeText(url);
+      alert(`✅ Lien privé copié !\n\n${url}`);
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Impossible de récupérer le lien.');
+    }
   };
 
   if (isLoading) {
@@ -166,15 +199,15 @@ export const CampaignDetailPage: React.FC = () => {
                 
                 <div className="grid grid-cols-4 gap-4 mt-6 text-center">
                   <div className="bg-white/5 rounded-xl p-3">
-                    <div className="text-xl font-bold">{campaign.view_count}</div>
+                    <div className="text-xl font-bold">{campaign.views_count ?? 0}</div>
                     <div className="text-xs text-gray-400">Vues 👁️</div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-3">
-                    <div className="text-xl font-bold">{campaign.donor_count}</div>
+                    <div className="text-xl font-bold">{campaign.donors_count ?? 0}</div>
                     <div className="text-xs text-gray-400">Dons 👥</div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-3">
-                    <div className="text-xl font-bold">{campaign.favorite_count || 0}</div>
+                    <div className="text-xl font-bold">{campaign.favorites_count ?? 0}</div>
                     <div className="text-xs text-gray-400">Favoris ❤️</div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-3">
@@ -189,25 +222,69 @@ export const CampaignDetailPage: React.FC = () => {
             <div className="w-full lg:w-80 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 flex flex-col gap-4 shadow-xl">
               {isCreator ? (
                 <>
-                  <div className="text-center font-bold text-violet-400 mb-2">⚙️ Gestion</div>
-                  {(campaign.status === 'DRAFT' || campaign.status === 'PENDING') && (
-                    <button className="w-full py-3 bg-gradient-to-r from-violet-600 to-blue-600 rounded-xl font-bold text-white hover:opacity-90">
+                  <div className="text-center font-bold text-violet-400 mb-2">⚙️ Gestion créateur</div>
+
+                  {/* Statut actuel */}
+                  <div className="text-center text-xs py-2 px-3 rounded-xl border border-white/10 bg-white/5 text-gray-400">
+                    Statut : <span className="font-bold text-white">{campaign.status}</span>
+                  </div>
+
+                  {/* Soumettre : seulement si DRAFT ou REJECTED */}
+                  {(campaign.status === 'DRAFT' || campaign.status === 'REJECTED') && (
+                    <button
+                      onClick={handlePublish}
+                      className="w-full py-3 bg-gradient-to-r from-violet-600 to-blue-600 rounded-xl font-bold text-white hover:opacity-90 transition-opacity"
+                    >
                       📤 Soumettre pour révision
                     </button>
                   )}
-                  <button className="w-full py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20">
-                    ✏️ Modifier
-                  </button>
-                  {campaign.status === 'ACTIVE' && (
-                    <button className="w-full py-3 bg-orange-500/20 text-orange-400 rounded-xl font-bold border border-orange-500/30 hover:bg-orange-500/30">
-                      ⏸️ Pause
+
+                  {/* Modifier : seulement si DRAFT ou REJECTED */}
+                  {(campaign.status === 'DRAFT' || campaign.status === 'REJECTED') && (
+                    <button
+                      onClick={() => navigate(`/campaigns/${id}/edit`)}
+                      className="w-full py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20 transition-colors"
+                    >
+                      ✏️ Modifier
                     </button>
                   )}
-                  <button className="w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold border border-red-500/30 hover:bg-red-500/30">
-                    ❌ Annuler
-                  </button>
-                  <button onClick={() => setShowShareModal(true)} className="w-full py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20">
-                    🔗 Partager / Lien privé
+
+                  {/* Pause : seulement si ACTIVE */}
+                  {campaign.status === 'ACTIVE' && (
+                    <button
+                      onClick={handlePause}
+                      className="w-full py-3 bg-orange-500/20 text-orange-400 rounded-xl font-bold border border-orange-500/30 hover:bg-orange-500/30 transition-colors"
+                    >
+                      ⏸️ Mettre en pause
+                    </button>
+                  )}
+
+                  {/* Lien privé : si PRIVATE ou UNLISTED */}
+                  {(campaign.visibility === 'PRIVATE' || campaign.visibility === 'UNLISTED') && (
+                    <button
+                      onClick={handleGetInviteLink}
+                      className="w-full py-3 bg-purple-500/20 text-purple-300 rounded-xl font-bold border border-purple-500/30 hover:bg-purple-500/30 transition-colors"
+                    >
+                      🔗 Copier le lien privé
+                    </button>
+                  )}
+
+                  {/* Annuler */}
+                  {!['COMPLETED', 'EXPIRED', 'CANCELLED'].includes(campaign.status) && (
+                    <button
+                      onClick={handleCancel}
+                      className="w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                    >
+                      ❌ Annuler la campagne
+                    </button>
+                  )}
+
+                  {/* Partager */}
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="w-full py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20 transition-colors"
+                  >
+                    📤 Partager
                   </button>
                 </>
               ) : (
@@ -379,14 +456,23 @@ export const CampaignDetailPage: React.FC = () => {
                   <button onClick={() => copyToClipboard(window.location.href)} className="px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-r-xl font-bold">Copier</button>
                 </div>
               </div>
-              {isCreator && inviteLink?.link && (
+              {isCreator && (campaign.visibility === 'PRIVATE' || campaign.visibility === 'UNLISTED') && (
                 <div>
-                  <label className="text-xs text-gray-400 font-bold uppercase">Lien d'invitation privé</label>
-                  <div className="flex mt-1">
-                    <input readOnly value={`${window.location.origin}/campaigns/join/${inviteLink.link}`} className="flex-1 bg-black/40 border border-white/10 rounded-l-xl p-3 text-sm text-orange-300" />
-                    <button onClick={() => copyToClipboard(`${window.location.origin}/campaigns/join/${inviteLink.link}`)} className="px-4 bg-orange-600 hover:bg-orange-700 text-white rounded-r-xl font-bold">Copier</button>
+                  <label className="text-xs text-gray-400 font-bold uppercase">🔒 Lien d'invitation privé</label>
+                  <div className="flex mt-2">
+                    <input
+                      readOnly
+                      value={`${window.location.origin}/campaigns/join/[cliquez Copier lien]`}
+                      className="flex-1 bg-black/40 border border-white/10 rounded-l-xl p-3 text-sm text-orange-300 truncate"
+                    />
+                    <button
+                      onClick={handleGetInviteLink}
+                      className="px-4 bg-orange-600 hover:bg-orange-700 text-white rounded-r-xl font-bold whitespace-nowrap"
+                    >
+                      Copier lien
+                    </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">Partagez ce lien unique pour donner un accès privé.</p>
+                  <p className="text-xs text-gray-500 mt-2">Cliquez 'Copier lien' pour générer et copier le lien privé.</p>
                 </div>
               )}
             </div>
