@@ -31,14 +31,27 @@ def _campaign_to_card(c: Campaign) -> dict:
         'cover_image': c.cover_image, 'created_at': c.created_at.isoformat() if c.created_at else None,
     }
 
-def _campaign_to_detail(c: Campaign) -> dict:
+def _campaign_to_detail(c: Campaign, db: Session = None) -> dict:
     d = _campaign_to_card(c)
+    # Récupère le nom du créateur
+    creator_name = 'Talent Mawhebti'
+    if db:
+        from app.models.profile import Profile
+        from app.models.user import User
+        profile = db.query(Profile).filter(Profile.user_id == c.creator_id).first()
+        if profile and (profile.first_name or profile.last_name):
+            creator_name = f"{profile.first_name or ''} {profile.last_name or ''}".strip()
+        else:
+            user = db.query(User).filter(User.id == c.creator_id).first()
+            if user:
+                creator_name = user.email.split('@')[0]
     d.update({
         'description': c.description, 'video_pitch': c.video_pitch,
         'shares_count': c.shares_count, 'favorites_count': c.favorites_count,
         'comments_count': c.comments_count, 'start_date': c.start_date.isoformat() if c.start_date else None,
         'published_at': c.published_at.isoformat() if c.published_at else None,
         'creator_id': str(c.creator_id),
+        'creator_name': creator_name,
     })
     return d
 
@@ -76,7 +89,7 @@ def my_campaigns(
 ):
     repo = CampaignRepository(db)
     items, total = repo.get_mine(current_user.id, page=page, page_size=page_size)
-    return {'total': total, 'page': page, 'items': [_campaign_to_detail(c) for c in items]}
+    return {'total': total, 'page': page, 'items': [_campaign_to_detail(c, db) for c in items]}
 
 # ─── Créer ──────────────────────────────────────────────────────────────────
 @router.post('/')
@@ -91,7 +104,7 @@ def get_campaign_by_code(code: str, db: Session = Depends(get_db)):
     campaign = repo.get_by_invite_code(code.upper())
     if not campaign:
         raise HTTPException(status_code=404, detail='Campagne introuvable ou code invalide.')
-    return _campaign_to_detail(campaign)
+    return _campaign_to_detail(campaign, db)
 
 @router.post('/join/{code}')
 def join_campaign_by_code(code: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -101,7 +114,7 @@ def join_campaign_by_code(code: str, db: Session = Depends(get_db), current_user
         raise HTTPException(status_code=404, detail='Code invalide.')
     if campaign.status != CampaignStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Cette campagne n'est plus active.")
-    return {'message': 'Vous avez rejoint la campagne.', 'campaign': _campaign_to_detail(campaign)}
+    return {'message': 'Vous avez rejoint la campagne.', 'campaign': _campaign_to_detail(campaign, db)}
 
 # ─── Détail ──────────────────────────────────────────────────────────────────
 @router.get('/{campaign_id}')
@@ -134,7 +147,7 @@ def get_campaign(
     if not is_creator:
         repo.increment_views(campaign_id)
 
-    return _campaign_to_detail(campaign)
+    return _campaign_to_detail(campaign, db)
 
 # ─── Statistiques (créateur + parent + admin) ────────────────────────────────
 @router.get('/{campaign_id}/statistics')
@@ -223,22 +236,30 @@ def update_campaign(
     campaign = repo.get_by_id(campaign_id)
     if not campaign or str(campaign.creator_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail='Non autorisé.')
-    if campaign.status not in [CampaignStatus.DRAFT, CampaignStatus.REJECTED]:
-        raise HTTPException(status_code=400, detail='Seulement modifiable en statut DRAFT ou REJECTED.')
-
-    # Champs protégés - on les retire silencieusement
-    protected = ['current_amount', 'donors_count', 'views_count', 'shares_count',
-                 'favorites_count', 'comments_count', 'beneficiary_id', 'invite_code',
-                 'created_at', 'creator_id', 'status', 'is_deleted']
-    for f in protected:
-        data.pop(f, None)
-
+    
+    # Champs toujours protégés
+    protected_always = ['current_amount', 'donors_count', 'views_count', 'shares_count',
+                        'favorites_count', 'comments_count', 'beneficiary_id', 'invite_code',
+                        'created_at', 'creator_id', 'status', 'is_deleted', 
+                        'target_amount', 'currency', 'completion_percentage']
+    
+    if campaign.status in [CampaignStatus.DRAFT, CampaignStatus.REJECTED]:
+        # Modification complète (sauf champs protégés)
+        for f in protected_always:
+            data.pop(f, None)
+    elif campaign.status == CampaignStatus.ACTIVE:
+        # Modification partielle seulement
+        allowed_in_active = {'title', 'description', 'category', 'location', 'cover_image'}
+        data = {k: v for k, v in data.items() if k in allowed_in_active}
+    else:
+        raise HTTPException(status_code=400, detail=f'Modification non autorisée en statut {campaign.status}.')
+    
     for key, value in data.items():
         if hasattr(campaign, key):
             setattr(campaign, key, value)
     db.commit()
     db.refresh(campaign)
-    return _campaign_to_detail(campaign)
+    return _campaign_to_detail(campaign, db)
 
 # ─── Soft Delete ─────────────────────────────────────────────────────────────
 @router.delete('/{campaign_id}')
@@ -273,7 +294,7 @@ def publish_campaign(
         repo.generate_invite_code(campaign)
 
     result = repo.publish(campaign)
-    return _campaign_to_detail(result)
+    return _campaign_to_detail(result, db)
 
 # ─── Pause ───────────────────────────────────────────────────────────────────
 @router.post('/{campaign_id}/pause')
@@ -288,7 +309,7 @@ def pause_campaign(
         raise HTTPException(status_code=403, detail='Non autorisé.')
     if campaign.status != CampaignStatus.ACTIVE:
         raise HTTPException(status_code=400, detail='Seulement pausable si ACTIVE.')
-    return _campaign_to_detail(repo.pause(campaign))
+    return _campaign_to_detail(repo.pause(campaign), db)
 
 # ─── Annuler ─────────────────────────────────────────────────────────────────
 @router.post('/{campaign_id}/cancel')
@@ -303,7 +324,7 @@ def cancel_campaign(
         raise HTTPException(status_code=403, detail='Non autorisé.')
     if campaign.status in [CampaignStatus.COMPLETED, CampaignStatus.EXPIRED]:
         raise HTTPException(status_code=400, detail="Impossible d'annuler une campagne terminée.")
-    return _campaign_to_detail(repo.cancel(campaign))
+    return _campaign_to_detail(repo.cancel(campaign), db)
 
 # ─── Régénérer lien (5/jour) ─────────────────────────────────────────────────
 @router.post('/{campaign_id}/regenerate-link')

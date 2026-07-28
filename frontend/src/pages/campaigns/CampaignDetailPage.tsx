@@ -50,8 +50,35 @@ export const CampaignDetailPage: React.FC = () => {
       const { data } = await api.get(`/campaigns/${id}/comments?page=1`);
       return data;
     },
-    enabled: activeTab === 'comments' && !!id
+    enabled: (activeTab === 'comments' || activeTab === 'news') && !!id
   });
+
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [newPost, setNewPost] = useState('');
+  const [postingNews, setPostingNews] = useState(false);
+
+  const handleFavorite = async () => {
+    if (!user) { navigate('/login'); return; }
+    try {
+      await api.post(`/campaigns/${id}/favorite`);
+      setIsFavorited(f => !f);
+      queryClient.invalidateQueries({ queryKey: ['campaign', id] });
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Erreur.');
+    }
+  };
+
+  const handlePostNews = async () => {
+    if (!newPost.trim()) return;
+    setPostingNews(true);
+    try {
+      await api.post(`/campaigns/${id}/comment`, { content: `📢 **ACTUALITÉ** — ${newPost}` });
+      setNewPost('');
+      queryClient.invalidateQueries({ queryKey: ['campaign-comments', id] });
+    } finally {
+      setPostingNews(false);
+    }
+  };
 
   const postCommentMutation = useMutation({
     mutationFn: (content: string) => api.post(`/campaigns/${id}/comment`, { content }),
@@ -226,7 +253,14 @@ export const CampaignDetailPage: React.FC = () => {
 
                   {/* Statut actuel */}
                   <div className="text-center text-xs py-2 px-3 rounded-xl border border-white/10 bg-white/5 text-gray-400">
-                    Statut : <span className="font-bold text-white">{campaign.status}</span>
+                    Statut : <span className="font-bold text-white">
+                      {campaign.status === 'DRAFT' ? '📝 Brouillon'
+                        : campaign.status === 'PENDING_REVIEW' ? '🕐 En révision'
+                        : campaign.status === 'ACTIVE' ? '✅ Active'
+                        : campaign.status === 'PAUSED' ? '⏸ Pause'
+                        : campaign.status === 'REJECTED' ? '❌ Refusée'
+                        : campaign.status}
+                    </span>
                   </div>
 
                   {/* Soumettre : seulement si DRAFT ou REJECTED */}
@@ -239,13 +273,14 @@ export const CampaignDetailPage: React.FC = () => {
                     </button>
                   )}
 
-                  {/* Modifier : seulement si DRAFT ou REJECTED */}
-                  {(campaign.status === 'DRAFT' || campaign.status === 'REJECTED') && (
+                  {/* Modifier : DRAFT, REJECTED, ou ACTIVE (titre/description/catégorie) */}
+                  {(campaign.status === 'DRAFT' || campaign.status === 'REJECTED' || campaign.status === 'ACTIVE') && (
                     <button
                       onClick={() => navigate(`/campaigns/${id}/edit`)}
                       className="w-full py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20 transition-colors"
                     >
                       ✏️ Modifier
+                      {campaign.status === 'ACTIVE' && <span className="text-[10px] block text-gray-400">(titre/description/catégorie)</span>}
                     </button>
                   )}
 
@@ -286,6 +321,13 @@ export const CampaignDetailPage: React.FC = () => {
                   >
                     📤 Partager
                   </button>
+
+                  {/* Note statut */}
+                  {campaign.status === 'PENDING_REVIEW' && (
+                    <p className="text-[10px] text-yellow-400/80 text-center">
+                      ⏳ En attente d'approbation admin.
+                    </p>
+                  )}
                 </>
               ) : (
                 <>
@@ -293,12 +335,19 @@ export const CampaignDetailPage: React.FC = () => {
                     💰 Soutenir ce projet
                   </button>
                   <div className="flex gap-2">
-                    <button className="flex-1 py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20 transition-colors">
-                      ❤️ Favori
-                    </button>
-                    <button onClick={() => setShowShareModal(true)} className="flex-1 py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20 transition-colors">
-                      📤 Partager
-                    </button>
+                    <button
+                    onClick={handleFavorite}
+                    className={`flex-1 py-3 rounded-xl font-bold transition-colors border ${
+                      isFavorited
+                        ? 'bg-red-500/30 text-red-300 border-red-500/40'
+                        : 'bg-white/10 text-white border-white/10 hover:bg-red-500/20 hover:text-red-300'
+                    }`}
+                  >
+                    {isFavorited ? '❤️ Favori' : '🤍 Favori'}
+                  </button>
+                  <button onClick={() => setShowShareModal(true)} className="flex-1 py-3 bg-white/10 rounded-xl font-bold text-white hover:bg-white/20 transition-colors border border-white/10">
+                    📤 Partager
+                  </button>
                   </div>
                   <button onClick={() => setShowReportModal(true)} className="text-sm text-gray-500 hover:text-red-400 mt-2 transition-colors">
                     🚩 Signaler cette campagne
@@ -433,12 +482,67 @@ export const CampaignDetailPage: React.FC = () => {
           )}
 
           {activeTab === 'news' && (
-            <div className="text-center py-16">
-              <span className="text-4xl mb-4 block">🚧</span>
-              <h3 className="text-xl font-bold text-white mb-2">Bientôt disponible</h3>
-              <p className="text-gray-400">Les actualités de la campagne apparaîtront ici.</p>
+            <div className="space-y-6">
+              {/* Formulaire créateur */}
+              {isCreator && (
+                <div className="bg-violet-500/10 border border-violet-500/20 rounded-2xl p-5">
+                  <h3 className="text-sm font-bold text-violet-300 mb-3">📢 Publier une actualité</h3>
+                  <textarea
+                    value={newPost}
+                    onChange={e => setNewPost(e.target.value)}
+                    placeholder="Partagez une mise à jour avec vos donateurs (ex: avancement du projet, remerciements, nouvelles importantes)..."
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-violet-500 resize-none h-28"
+                  />
+                  <div className="flex justify-between items-center mt-3">
+                    <span className="text-xs text-gray-500">{newPost.length}/500 caractères</span>
+                    <button
+                      onClick={handlePostNews}
+                      disabled={!newPost.trim() || postingNews || newPost.length > 500}
+                      className="px-5 py-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-opacity"
+                    >
+                      {postingNews ? 'Publication...' : '📢 Publier'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Liste des actualités (commentaires du créateur marqués 📢) */}
+              <div className="space-y-4">
+                {!comments?.items?.length ? (
+                  <div className="text-center py-12">
+                    <span className="text-4xl block mb-3">📰</span>
+                    <p className="text-gray-400 text-sm">Aucune actualité publiée.</p>
+                    {isCreator && <p className="text-xs text-gray-500 mt-2">Publiez votre première mise à jour ci-dessus.</p>}
+                  </div>
+                ) : (
+                  comments.items
+                    .filter((c: any) => c.content?.startsWith('📢 **ACTUALITÉ**'))
+                    .map((post: any, i: number) => (
+                      <div key={i} className="bg-black/20 border border-violet-500/20 rounded-2xl p-5">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-9 h-9 rounded-full bg-violet-600/40 flex items-center justify-center text-sm font-bold">
+                            {post.author_name?.[0] || '🎤'}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-violet-300">{post.author_name || 'Créateur'} <span className="text-[10px] bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full ml-1">CRÉATEUR</span></div>
+                            <div className="text-[10px] text-gray-500">{new Date(post.created_at).toLocaleDateString('fr-TN', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                          </div>
+                        </div>
+                        <p className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">
+                          {post.content.replace('📢 **ACTUALITÉ** — ', '')}
+                        </p>
+                      </div>
+                    ))
+                )}
+                {comments?.items?.filter((c: any) => c.content?.startsWith('📢 **ACTUALITÉ**')).length === 0 && comments?.items?.length > 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-sm">Aucune actualité publiée par le créateur.</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
+
 
         </div>
       </div>
