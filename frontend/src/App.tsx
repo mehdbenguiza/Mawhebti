@@ -25,6 +25,7 @@ import { useAuthStore } from './store/authStore';
 import { CampaignsExplorePage } from './pages/campaigns/CampaignsExplorePage';
 import { CampaignDetailPage } from './pages/campaigns/CampaignDetailPage';
 import { CampaignJoinPage } from './pages/campaigns/CampaignJoinPage';
+import { CampaignEditPage } from './pages/campaigns/CampaignEditPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,10 +63,10 @@ function App() {
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/talents/:id" element={<PublicProfilePage />} />
-          <Route path="/campaigns/:id/donate" element={<CampaignCheckoutPage />} />
-          
           <Route path="/campaigns/explore" element={<CampaignsExplorePage />} />
           <Route path="/campaigns/join/:code" element={<CampaignJoinPage />} />
+          <Route path="/campaigns/:id/edit" element={<CampaignEditPage />} />
+          <Route path="/campaigns/:id/donate" element={<CampaignCheckoutPage />} />
           <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
 
           {/* Dashboard Talent (Majeur et Mineur) */}
