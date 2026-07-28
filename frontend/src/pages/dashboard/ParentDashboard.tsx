@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { parentService } from '../../services/parent.service';
+import api from '../../services/api';
+
 
 export const ParentDashboard: React.FC = () => {
   const queryClient = useQueryClient();
@@ -29,6 +31,38 @@ export const ParentDashboard: React.FC = () => {
       setErrorMsg(err.response?.data?.detail || "Erreur lors de la validation. Mot de passe incorrect ?");
     }
   });
+
+  // Fetch children and their campaigns
+  const { data: childrenData } = useQuery({
+    queryKey: ['parent-children'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/parent/children');
+        return data || [];
+      } catch (e) {
+        return [];
+      }
+    }
+  });
+
+  const { data: childrenCampaigns, isLoading: campaignsLoading } = useQuery({
+    queryKey: ['parent-children-campaigns', childrenData],
+    queryFn: async () => {
+      if (!childrenData || childrenData.length === 0) return [];
+      const allCampaigns = [];
+      for (const child of childrenData) {
+        try {
+          const { data } = await api.get(`/campaigns/mine?child_id=${child.id}`);
+          if (data && data.items) {
+            allCampaigns.push(...data.items.map((c: any) => ({ ...c, child_name: child.first_name || child.email })));
+          }
+        } catch (e) {}
+      }
+      return allCampaigns;
+    },
+    enabled: !!childrenData && childrenData.length > 0
+  });
+
 
   const openModal = (id: string, action: 'approve' | 'reject') => {
     setSelectedRequest({ id, action });
@@ -104,6 +138,53 @@ export const ParentDashboard: React.FC = () => {
             </div>
           </Link>
         </div>
+      </div>
+
+      {/* Campagnes de mes enfants */}
+      <div>
+        <h3 className="text-lg font-black text-white mb-4" style={{ fontFamily: "'Outfit', sans-serif" }}>👶 Campagnes de mes enfants</h3>
+        {campaignsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-40 rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
+          </div>
+        ) : !childrenCampaigns || childrenCampaigns.length === 0 ? (
+          <div className="text-center py-8 rounded-2xl border border-dashed border-white/20 bg-white/5">
+            <p className="text-gray-300 font-bold text-sm">Aucun enfant lié ou aucune campagne en cours.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {childrenCampaigns.map((camp: any) => {
+              const progress = Math.min((camp.amount_collected / camp.goal_amount) * 100, 100);
+              return (
+                <div key={camp.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-white/20 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-white text-sm truncate pr-2">{camp.title}</h4>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                      {camp.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400 mb-3 font-semibold text-teal-400">
+                    Enfant : {camp.child_name}
+                  </div>
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-bold text-violet-400">{camp.amount_collected.toLocaleString('fr-TN')} TND</span>
+                      <span className="text-gray-500">{camp.goal_amount.toLocaleString('fr-TN')} TND</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-violet-600 to-blue-600" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link to={`/campaigns/${camp.id}`} className="flex-1 text-center py-2 bg-white/10 hover:bg-white/20 text-xs font-bold rounded-lg transition-colors">
+                      Voir
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="bg-white/5 backdrop-blur-md rounded-2xl shadow-xl border border-white/10 p-6 sm:p-8 mt-8">

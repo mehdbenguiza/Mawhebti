@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
 import { videoService } from '../../services/video.service';
+import api from '../../services/api';
 import type { TalentAnalytics, VideoAnalytics } from '../../types/video';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -147,6 +149,22 @@ export const TalentDashboard: React.FC = () => {
     staleTime: 30_000, // 30s cache
   });
 
+  const { data: campaignsData, isLoading: campaignsLoading } = useQuery({
+    queryKey: ['my-campaigns'],
+    queryFn: async () => {
+      const { data } = await api.get('/campaigns/mine');
+      return data?.items || [];
+    }
+  });
+
+  const publishCampaign = async (id: string) => {
+    await api.post(`/campaigns/${id}/publish`);
+  };
+
+  const pauseCampaign = async (id: string) => {
+    await api.post(`/campaigns/${id}/pause`);
+  };
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto p-4 sm:p-6 text-white font-sans">
 
@@ -201,6 +219,78 @@ export const TalentDashboard: React.FC = () => {
           <KpiCard icon="⏳" label="En attente"          value={data?.pending_videos ?? 0}           color="orange" loading={isLoading} />
           <KpiCard icon="❌" label="Rejetées"             value={data?.rejected_videos ?? 0}         color="red"    loading={isLoading} />
         </div>
+      </section>
+
+      {/* Mes Campagnes */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-black text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            💼 Mes Campagnes
+          </h3>
+          <Link
+            to="/dashboard/campaigns/new"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg"
+          >
+            <span>+</span> Créer
+          </Link>
+        </div>
+
+        {campaignsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-40 rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
+            <div className="h-40 hidden md:block rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
+          </div>
+        ) : !campaignsData || campaignsData.length === 0 ? (
+          <div className="text-center py-8 rounded-2xl border border-dashed border-white/20 bg-white/5">
+            <p className="text-gray-300 font-bold text-sm mb-3">Aucune campagne en cours</p>
+            <Link
+              to="/dashboard/campaigns/new"
+              className="inline-block px-5 py-2.5 bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-bold rounded-xl hover:opacity-90 shadow-lg"
+            >
+              Créer ma première campagne
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {campaignsData.map((camp: any) => {
+              const progress = Math.min((camp.amount_collected / camp.goal_amount) * 100, 100);
+              return (
+                <div key={camp.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-white/20 transition-colors">
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="font-bold text-white text-sm truncate pr-2">{camp.title}</h4>
+                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                      {camp.status}
+                    </span>
+                  </div>
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-bold text-violet-400">{camp.amount_collected.toLocaleString('fr-TN')} TND</span>
+                      <span className="text-gray-500">{camp.goal_amount.toLocaleString('fr-TN')} TND</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-violet-600 to-blue-600" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link to={`/campaigns/${camp.id}`} className="flex-1 text-center py-2 bg-white/10 hover:bg-white/20 text-xs font-bold rounded-lg transition-colors">
+                      Voir
+                    </Link>
+                    {camp.status === 'DRAFT' && (
+                      <button onClick={() => publishCampaign(camp.id)} className="flex-1 py-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90 text-white text-xs font-bold rounded-lg transition-colors">
+                        Soumettre
+                      </button>
+                    )}
+                    {camp.status === 'ACTIVE' && (
+                      <button onClick={() => pauseCampaign(camp.id)} className="flex-1 py-2 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 text-xs font-bold rounded-lg transition-colors">
+                        Pause
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Mes Vidéos */}

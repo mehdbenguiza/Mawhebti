@@ -8,6 +8,7 @@ import { NotificationDropdown } from '../components/ui/NotificationDropdown';
 const getNavLinks = (role: string | undefined) => {
   const links = [
     { to: '/feed',    label: 'Explorer',        icon: '🎬', desc: 'Fil d\'actualité' },
+    { to: '/campaigns/explore', label: 'Campagnes', icon: '💰', desc: 'Campagnes' },
     { to: 'overview', label: 'Vue d\'ensemble',  icon: '⚡', desc: 'Tableau de bord'  },
     { to: 'inbox',    label: 'Messagerie',       icon: '💬', desc: 'Messages'         },
     { to: 'profile',  label: 'Mon profil',       icon: '👤', desc: 'Mes informations' },

@@ -31,6 +31,11 @@ class CampaignStatus(str, enum.Enum):
     EXPIRED = "EXPIRED"
     CANCELLED = "CANCELLED"
 
+class CampaignVisibility(str, enum.Enum):
+    PUBLIC = 'PUBLIC'
+    PRIVATE = 'PRIVATE'
+    UNLISTED = 'UNLISTED'
+
 class CampaignVerification(str, enum.Enum):
     UNVERIFIED = "UNVERIFIED"
     IDENTITY_VERIFIED = "IDENTITY_VERIFIED"
@@ -81,6 +86,16 @@ class Campaign(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(UUID(as_uuid=True), nullable=True)
     
+    # Sprint 9.1 Social fields
+    invite_code = Column(String(12), nullable=True, unique=True)
+    views_count = Column(Integer, default=0, nullable=False, server_default='0')
+    shares_count = Column(Integer, default=0, nullable=False, server_default='0')
+    favorites_count = Column(Integer, default=0, nullable=False, server_default='0')
+    comments_count = Column(Integer, default=0, nullable=False, server_default='0')
+    donors_count = Column(Integer, default=0, nullable=False, server_default='0')
+    last_donation_at = Column(DateTime(timezone=True), nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
