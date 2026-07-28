@@ -81,7 +81,7 @@ class CampaignService:
             description=data.get('description'),
             category=data.get('category'),
             target_amount=data.get('target_amount'),
-            currency=data.get('currency', 'EUR'),
+            currency=data.get('currency', 'TND'),
             start_date=data.get('start_date'),
             end_date=data.get('end_date'),
             visibility=data.get('visibility', 'PUBLIC'),

@@ -42,10 +42,25 @@ export const CampaignJoinPage: React.FC = () => {
     );
   }
 
-  const progress = Math.min((campaign.amount_collected / campaign.goal_amount) * 100, 100);
+  const current = campaign.current_amount ?? campaign.amount_collected ?? 0;
+  const target = campaign.target_amount ?? campaign.goal_amount ?? 1;
+  const progress = Math.min((current / target) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0f] font-sans relative overflow-hidden">
+
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors">
+            ← Retour
+          </button>
+          <span className="text-white font-bold text-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>🔒 Invitation Privée</span>
+          <Link to="/campaigns/explore" className="text-xs text-violet-400 hover:text-violet-300 font-semibold">Explorer</Link>
+        </div>
+      </nav>
+
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-56px)] relative">
       {/* Background blur elements */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-[100px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"></div>

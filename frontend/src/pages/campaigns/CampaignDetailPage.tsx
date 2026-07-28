@@ -101,11 +101,35 @@ export const CampaignDetailPage: React.FC = () => {
     );
   }
 
-  const isCreator = campaign.is_creator || user?.id === campaign.creator_id;
-  const progress = Math.min((campaign.amount_collected / campaign.goal_amount) * 100, 100);
+  const isCreator = user && campaign.creator_id === user.id;
+  const current = campaign.current_amount ?? campaign.amount_collected ?? 0;
+  const target = campaign.target_amount ?? campaign.goal_amount ?? 1;
+  const progress = Math.min((current / target) * 100, 100);
+  const dashboardPath = user
+    ? `/dashboard/${user.role === 'TALENT_MINOR' || user.role === 'TALENT_MAJOR' ? 'talent' : user.role === 'PARENT' ? 'parent' : 'recruiter'}/overview`
+    : '/login';
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white font-sans pb-20">
+
+      {/* Sticky Navbar */}
+      <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
+          >
+            ← Retour
+          </button>
+          <span className="text-white font-bold text-sm truncate max-w-[200px]" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            {campaign.title}
+          </span>
+          <Link to={dashboardPath} className="text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors">
+            {user ? 'Mon Dashboard →' : 'Se connecter'}
+          </Link>
+        </div>
+      </nav>
+
       {/* HEADER SECTION */}
       <div className="bg-white/5 border-b border-white/10 pt-8 pb-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -128,8 +152,8 @@ export const CampaignDetailPage: React.FC = () => {
               <div className="bg-black/30 rounded-2xl p-6 border border-white/5 mt-6">
                 <div className="flex justify-between items-end mb-2">
                   <div>
-                    <span className="text-3xl font-black text-white">{campaign.amount_collected.toLocaleString('fr-TN')} TND</span>
-                    <span className="text-gray-400 ml-2">sur {campaign.goal_amount.toLocaleString('fr-TN')} TND</span>
+                    <span className="text-2xl font-black text-white">{current.toLocaleString('fr-TN')} TND</span>
+                    <span className="text-gray-500 text-sm">sur {target.toLocaleString('fr-TN')} TND</span>
                   </div>
                   <span className="text-xl font-bold text-violet-400">{progress.toFixed(1)}%</span>
                 </div>

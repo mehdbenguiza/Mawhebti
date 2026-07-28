@@ -216,3 +216,43 @@ class CampaignRepository:
         if campaign:
             campaign.views_count += 1
             self.db.commit()
+
+    # ─── Méthodes utilisées par CampaignService ──────────────────────────────
+
+    def count_active_by_creator(self, creator_id: UUID) -> int:
+        """Compte les campagnes non-terminées d'un créateur."""
+        return self.db.query(Campaign).filter(
+            Campaign.creator_id == creator_id,
+            Campaign.is_deleted == False,
+            Campaign.status.in_([
+                CampaignStatus.DRAFT,
+                CampaignStatus.PENDING_REVIEW,
+                CampaignStatus.ACTIVE,
+                CampaignStatus.PAUSED,
+            ])
+        ).count()
+
+    def create(self, campaign: Campaign) -> Campaign:
+        """Persiste une nouvelle campagne en base."""
+        self.db.add(campaign)
+        self.db.commit()
+        self.db.refresh(campaign)
+        return campaign
+
+    def update(self, campaign: Campaign) -> Campaign:
+        """Sauvegarde les modifications d'une campagne existante."""
+        self.db.commit()
+        self.db.refresh(campaign)
+        return campaign
+
+    def get_by_id_with_lock(self, campaign_id: UUID) -> Optional[Campaign]:
+        """Récupère une campagne avec verrou SELECT FOR UPDATE (évite les race conditions)."""
+        return self.db.query(Campaign).filter(
+            Campaign.id == campaign_id,
+            Campaign.is_deleted == False
+        ).with_for_update().first()
+
+    def log_audit(self, audit) -> None:
+        """Enregistre un audit dans la table campaign_audits."""
+        self.db.add(audit)
+        self.db.commit()

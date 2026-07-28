@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
 
 const CATEGORIES = ['Tous', 'Musique', 'Sport', 'Art', 'Éducation', 'Technologie', 'Culture', 'Santé', 'Autre'];
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -39,6 +40,8 @@ interface Campaign {
 }
 
 export const CampaignsExplorePage: React.FC = () => {
+  const navigate = useNavigate();
+  const user = useAuthStore(s => s.user);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Tous');
   const [location, setLocation] = useState('');
@@ -70,9 +73,33 @@ export const CampaignsExplorePage: React.FC = () => {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-4 sm:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
-        
+    <div className="min-h-screen bg-[#0a0a0f] text-white font-sans">
+
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-14 flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
+          >
+            ← Retour
+          </button>
+          <span className="text-white font-bold text-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>💰 Campagnes</span>
+          {user ? (
+            <Link
+              to={`/dashboard/${user.role === 'TALENT_MINOR' || user.role === 'TALENT_MAJOR' ? 'talent' : user.role === 'PARENT' ? 'parent' : 'recruiter'}/overview`}
+              className="text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors"
+            >
+              Mon Dashboard →
+            </Link>
+          ) : (
+            <Link to="/login" className="text-xs text-violet-400 hover:text-violet-300 font-semibold">Se connecter</Link>
+          )}
+        </div>
+      </nav>
+
+      <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
+
         {/* Header */}
         <div className="text-center space-y-4 pt-4">
           <h1 className="text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-blue-600" style={{ fontFamily: "'Outfit', sans-serif" }}>
