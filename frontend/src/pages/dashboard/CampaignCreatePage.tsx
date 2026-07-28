@@ -56,7 +56,7 @@ export function CampaignCreatePage() {
         beneficiary_type: 'PERSON',
       };
       await api.post('/campaigns/', payload);
-      navigate('../crowdfunding', { replace: true });
+      navigate('../overview', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Erreur lors de la création de la campagne.');
     } finally {

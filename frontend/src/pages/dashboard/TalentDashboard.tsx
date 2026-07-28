@@ -149,7 +149,7 @@ export const TalentDashboard: React.FC = () => {
     staleTime: 30_000, // 30s cache
   });
 
-  const { data: campaignsData, isLoading: campaignsLoading } = useQuery({
+  const { data: campaignsData, isLoading: campaignsLoading, refetch: refetchCampaigns } = useQuery({
     queryKey: ['my-campaigns'],
     queryFn: async () => {
       const { data } = await api.get('/campaigns/mine');
@@ -158,11 +158,32 @@ export const TalentDashboard: React.FC = () => {
   });
 
   const publishCampaign = async (id: string) => {
-    await api.post(`/campaigns/${id}/publish`);
+    try {
+      await api.post(`/campaigns/${id}/publish`);
+      refetchCampaigns();
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Erreur lors de la soumission.');
+    }
   };
 
   const pauseCampaign = async (id: string) => {
-    await api.post(`/campaigns/${id}/pause`);
+    try {
+      await api.post(`/campaigns/${id}/pause`);
+      refetchCampaigns();
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Erreur lors de la pause.');
+    }
+  };
+
+  const copyInviteLink = async (id: string) => {
+    try {
+      const { data } = await api.get(`/campaigns/${id}/invite-link`);
+      const fullUrl = `${window.location.origin}/campaigns/join/${data.invite_code}`;
+      await navigator.clipboard.writeText(fullUrl);
+      alert(`✅ Lien copié !\n${fullUrl}`);
+    } catch {
+      alert('Impossible de copier le lien.');
+    }
   };
 
   return (
@@ -253,36 +274,66 @@ export const TalentDashboard: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {campaignsData.map((camp: any) => {
-              const progress = Math.min((camp.amount_collected / camp.goal_amount) * 100, 100);
+              const current = camp.current_amount ?? camp.amount_collected ?? 0;
+              const target = camp.target_amount ?? camp.goal_amount ?? 1;
+              const progress = Math.min((current / target) * 100, 100);
+              const isPrivate = camp.visibility === 'PRIVATE' || camp.visibility === 'UNLISTED';
+              const statusColors: Record<string, string> = {
+                DRAFT: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+                PENDING_REVIEW: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+                ACTIVE: 'bg-green-500/20 text-green-300 border-green-500/30',
+                PAUSED: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+                REJECTED: 'bg-red-500/20 text-red-300 border-red-500/30',
+                COMPLETED: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+              };
               return (
                 <div key={camp.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-white/20 transition-colors">
                   <div className="flex justify-between items-start mb-3">
-                    <h4 className="font-bold text-white text-sm truncate pr-2">{camp.title}</h4>
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                      {camp.status}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-white text-sm truncate pr-2">{camp.title}</h4>
+                      {isPrivate && (
+                        <span className="text-[10px] text-purple-400 font-semibold">🔒 {camp.visibility}</span>
+                      )}
+                    </div>
+                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border shrink-0 ${statusColors[camp.status] || statusColors.DRAFT}`}>
+                      {camp.status === 'DRAFT' ? 'Brouillon'
+                        : camp.status === 'PENDING_REVIEW' ? 'En révision'
+                        : camp.status === 'ACTIVE' ? 'Active'
+                        : camp.status === 'PAUSED' ? 'Pause'
+                        : camp.status === 'REJECTED' ? 'Refusée'
+                        : camp.status}
                     </span>
                   </div>
                   <div className="mb-4">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-bold text-violet-400">{camp.amount_collected.toLocaleString('fr-TN')} TND</span>
-                      <span className="text-gray-500">{camp.goal_amount.toLocaleString('fr-TN')} TND</span>
+                      <span className="font-bold text-violet-400">{current.toLocaleString('fr-TN')} TND</span>
+                      <span className="text-gray-500">{target.toLocaleString('fr-TN')} TND</span>
                     </div>
                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-violet-600 to-blue-600" style={{ width: `${progress}%` }} />
+                      <div className="h-full bg-gradient-to-r from-violet-600 to-blue-600 transition-all" style={{ width: `${progress}%` }} />
                     </div>
+                    <p className="text-[10px] text-gray-600 mt-1">{progress.toFixed(1)}% financé</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Link to={`/campaigns/${camp.id}`} className="flex-1 text-center py-2 bg-white/10 hover:bg-white/20 text-xs font-bold rounded-lg transition-colors">
                       Voir
                     </Link>
+                    {isPrivate && (
+                      <button
+                        onClick={() => copyInviteLink(camp.id)}
+                        className="flex-1 py-2 bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30 text-xs font-bold rounded-lg transition-colors"
+                      >
+                        🔗 Lien privé
+                      </button>
+                    )}
                     {camp.status === 'DRAFT' && (
                       <button onClick={() => publishCampaign(camp.id)} className="flex-1 py-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90 text-white text-xs font-bold rounded-lg transition-colors">
-                        Soumettre
+                        📤 Soumettre
                       </button>
                     )}
                     {camp.status === 'ACTIVE' && (
                       <button onClick={() => pauseCampaign(camp.id)} className="flex-1 py-2 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 text-xs font-bold rounded-lg transition-colors">
-                        Pause
+                        ⏸ Pause
                       </button>
                     )}
                   </div>

@@ -94,6 +94,10 @@ class CampaignService:
 
         campaign = self.repository.create(campaign)
 
+        # Générer le lien d'invitation dès la création pour les campagnes privées/unlisted
+        if campaign.visibility in ['PRIVATE', 'UNLISTED']:
+            self.repository.generate_invite_code(campaign)
+
         # Log audit
         audit = CampaignAudit(
             campaign_id=campaign.id,
