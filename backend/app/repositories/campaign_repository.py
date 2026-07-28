@@ -21,7 +21,10 @@ class CampaignRepository:
         self.db = db
 
     def _base_query(self):
-        return self.db.query(Campaign).filter(Campaign.is_deleted == False)
+        # is_deleted peut être NULL pour les anciens enregistrements → traiter NULL comme False
+        return self.db.query(Campaign).filter(
+            (Campaign.is_deleted == False) | (Campaign.is_deleted == None)
+        )
 
     def get_public_campaigns(
         self,
