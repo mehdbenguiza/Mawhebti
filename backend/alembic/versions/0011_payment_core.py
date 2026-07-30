@@ -30,24 +30,21 @@ def upgrade():
         sa.Column('amount', sa.Numeric(12,2), nullable=False),
         sa.Column('balance_before', sa.Numeric(12,2), nullable=False),
         sa.Column('balance_after', sa.Numeric(12,2), nullable=False),
-        sa.Column('reference', sa.String(255), nullable=False, unique=True),
+        sa.Column('reference', sa.String(255), nullable=False, unique=True, index=True),
         sa.Column('description', sa.Text, nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
-    op.create_index('ix_wallet_transactions_wallet_id', 'wallet_transactions', ['wallet_id'])
-    op.create_index('ix_wallet_transactions_reference', 'wallet_transactions', ['reference'], unique=True)
     
     # Table payment_events (idempotence webhooks)
     op.create_table('payment_events',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=sa.text('gen_random_uuid()')),
         sa.Column('provider', sa.String(50), nullable=False),
-        sa.Column('provider_event_id', sa.String(255), nullable=False, unique=True),
+        sa.Column('provider_event_id', sa.String(255), nullable=False, unique=True, index=True),
         sa.Column('event_type', sa.String(100), nullable=False),
         sa.Column('payload', postgresql.JSON, nullable=True),
         sa.Column('processed_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.Column('status', sa.String(20), nullable=False, server_default='PROCESSED'),
     )
-    op.create_index('ix_payment_events_provider_event_id', 'payment_events', ['provider_event_id'], unique=True)
     
     # Colonnes manquantes sur payment_intents
     op.add_column('payment_intents', sa.Column('amount', sa.Numeric(12,2), nullable=True))
