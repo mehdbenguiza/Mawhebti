@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 
 function StatCard({ icon, label, value, sub, color = 'violet' }: any) {
@@ -22,7 +22,18 @@ function StatCard({ icon, label, value, sub, color = 'violet' }: any) {
 
 export const WalletPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Si on revient d'un paiement (Recharge Stripe/Konnect/Mock), on force le rafraîchissement
+    const params = new URLSearchParams(location.search);
+    if (params.get('payment')) {
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      // Nettoyer l'URL pour ne pas refetcher en boucle à chaque rerender (optionnel)
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location.search, queryClient]);
 
   const { data: wallet, isLoading } = useQuery({
     queryKey: ['wallet'],
@@ -88,7 +99,7 @@ export const WalletPage: React.FC = () => {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-white text-sm transition-colors">← Retour</button>
+          <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-white text-sm transition-colors">← Retour au Dashboard</button>
           <span className="font-black text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>💳 Mon Wallet</span>
           <button onClick={() => navigate('/wallet/withdrawals')} className="text-xs text-violet-400 hover:text-violet-300">Retraits →</button>
         </div>
