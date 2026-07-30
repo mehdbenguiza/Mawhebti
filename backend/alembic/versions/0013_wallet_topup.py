@@ -1,7 +1,7 @@
 """wallet topup
 
 Revision ID: 0013_wallet_topup
-Revises: 0012_merge_heads
+Revises: 0011_payment_core
 Create Date: 2026-07-30 20:10:00.000000
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '0013_wallet_topup'
-down_revision: Union[str, None] = '0012_merge_heads'
+down_revision: Union[str, None] = '0011_payment_core'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
