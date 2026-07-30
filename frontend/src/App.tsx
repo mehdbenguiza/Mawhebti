@@ -26,6 +26,11 @@ import { CampaignsExplorePage } from './pages/campaigns/CampaignsExplorePage';
 import { CampaignDetailPage } from './pages/campaigns/CampaignDetailPage';
 import { CampaignJoinPage } from './pages/campaigns/CampaignJoinPage';
 import { CampaignEditPage } from './pages/campaigns/CampaignEditPage';
+import { WalletPage } from './pages/wallet/WalletPage';
+import { MyDonationsPage } from './pages/wallet/MyDonationsPage';
+import { WithdrawalPage } from './pages/wallet/WithdrawalPage';
+import { ReceiptsPage } from './pages/wallet/ReceiptsPage';
+import { FinanceDashboard } from './pages/admin/FinanceDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +73,15 @@ function App() {
           <Route path="/campaigns/:id/edit" element={<CampaignEditPage />} />
           <Route path="/campaigns/:id/donate" element={<CampaignCheckoutPage />} />
           <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
+
+          {/* Wallet & Paiements */}
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/wallet/donations" element={<MyDonationsPage />} />
+          <Route path="/wallet/withdrawals" element={<WithdrawalPage />} />
+          <Route path="/wallet/receipts" element={<ReceiptsPage />} />
+
+          {/* Admin Finance */}
+          <Route path="/admin/finance" element={<FinanceDashboard />} />
 
           {/* Dashboard Talent (Majeur et Mineur) */}
           <Route

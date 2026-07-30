@@ -138,3 +138,53 @@ class FraudCheck(Base):
     reasons = Column(JSON, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class WalletStatus(str, enum.Enum):
+    ACTIVE = 'ACTIVE'
+    FROZEN = 'FROZEN'
+    CLOSED = 'CLOSED'
+
+class WalletTransactionType(str, enum.Enum):
+    CREDIT = 'CREDIT'
+    DEBIT = 'DEBIT'
+    LOCK = 'LOCK'
+    UNLOCK = 'UNLOCK'
+
+class Wallet(Base):
+    __tablename__ = 'wallets'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), nullable=False, unique=True, index=True)
+    currency = Column(String(10), nullable=False, default='TND')
+    available_balance = Column(Numeric(12,2), nullable=False, default=0)
+    pending_balance = Column(Numeric(12,2), nullable=False, default=0)
+    locked_balance = Column(Numeric(12,2), nullable=False, default=0)
+    total_received = Column(Numeric(12,2), nullable=False, default=0)
+    total_withdrawn = Column(Numeric(12,2), nullable=False, default=0)
+    total_refunded = Column(Numeric(12,2), nullable=False, default=0)
+    status = Column(Enum(WalletStatus, native_enum=False, length=20), nullable=False, default=WalletStatus.ACTIVE)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    transactions = relationship('WalletTransaction', back_populates='wallet', order_by='WalletTransaction.created_at.desc()')
+
+class WalletTransaction(Base):
+    __tablename__ = 'wallet_transactions'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    wallet_id = Column(UUID(as_uuid=True), ForeignKey('wallets.id', ondelete='CASCADE'), nullable=False, index=True)
+    transaction_type = Column(Enum(WalletTransactionType, native_enum=False, length=50), nullable=False)
+    amount = Column(Numeric(12,2), nullable=False)
+    balance_before = Column(Numeric(12,2), nullable=False)
+    balance_after = Column(Numeric(12,2), nullable=False)
+    reference = Column(String(255), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    wallet = relationship('Wallet', back_populates='transactions')
+
+class PaymentEvent(Base):
+    __tablename__ = 'payment_events'
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider = Column(String(50), nullable=False)
+    provider_event_id = Column(String(255), nullable=False, unique=True, index=True)
+    event_type = Column(String(100), nullable=False)
+    payload = Column(JSON, nullable=True)
+    processed_at = Column(DateTime(timezone=True), server_default=func.now())
+    status = Column(String(20), nullable=False, default='PROCESSED')

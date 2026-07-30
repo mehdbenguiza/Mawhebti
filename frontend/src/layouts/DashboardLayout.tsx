@@ -7,15 +7,21 @@ import { NotificationDropdown } from '../components/ui/NotificationDropdown';
 
 const getNavLinks = (role: string | undefined) => {
   const links = [
-    { to: '/feed',    label: 'Explorer',        icon: '🎬', desc: 'Fil d\'actualité' },
-    { to: '/campaigns/explore', label: 'Campagnes', icon: '💰', desc: 'Campagnes' },
-    { to: 'overview', label: 'Vue d\'ensemble',  icon: '⚡', desc: 'Tableau de bord'  },
-    { to: 'inbox',    label: 'Messagerie',       icon: '💬', desc: 'Messages'         },
-    { to: 'profile',  label: 'Mon profil',       icon: '👤', desc: 'Mes informations' },
-    { to: 'settings', label: 'Paramètres du compte', icon: '⚙️', desc: 'Sécurité et Email' },
+    { to: '/feed',              label: 'Explorer',           icon: '🎬', desc: 'Fil d\'actualité' },
+    { to: '/campaigns/explore', label: 'Campagnes',          icon: '💰', desc: 'Explorer les campagnes' },
+    { to: 'overview',           label: 'Vue d\'ensemble',    icon: '⚡', desc: 'Tableau de bord'  },
+    { to: 'inbox',              label: 'Messagerie',         icon: '💬', desc: 'Messages'         },
+    { to: 'profile',            label: 'Mon profil',         icon: '👤', desc: 'Mes informations' },
+    { to: 'settings',           label: 'Paramètres',         icon: '⚙️', desc: 'Sécurité et Email' },
+    { to: '/wallet',            label: 'Mon Wallet',         icon: '👛', desc: 'Solde TND & historique' },
+    { to: '/wallet/donations',  label: 'Mes Dons',           icon: '🎁', desc: 'Historique des dons' },
+    { to: '/wallet/receipts',   label: 'Mes Reçus',          icon: '🧾', desc: 'Reçus PDF' },
   ];
   if (role === 'TALENT_MINOR' || role === 'TALENT_MAJOR') {
     links.push({ to: 'upload', label: 'Publier une vidéo', icon: '🎥', desc: 'Uploader' });
+  }
+  if (role === 'ADMIN' || role === 'MODERATOR') {
+    links.push({ to: '/admin/finance', label: 'Finance Admin', icon: '🛡️', desc: 'Paiements & Wallets' });
   }
   return links;
 };

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { saveVisitedPrivate } from './CampaignsExplorePage';
 
 export const CampaignJoinPage: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -18,6 +19,13 @@ export const CampaignJoinPage: React.FC = () => {
     enabled: !!code,
     retry: false
   });
+
+  // Sauvegarder la campagne privée visitée dans localStorage
+  useEffect(() => {
+    if (campaign && (campaign.visibility === 'PRIVATE' || campaign.visibility === 'UNLISTED')) {
+      saveVisitedPrivate(campaign);
+    }
+  }, [campaign]);
 
   if (isLoading) {
     return (
