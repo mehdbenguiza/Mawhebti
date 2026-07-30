@@ -126,9 +126,14 @@ async def mock_checkout_confirm(
     
     # Trouver la campagne pour rediriger
     intent = db.query(PaymentIntent).filter(PaymentIntent.provider_payment_id == payment_id).first()
+    import os
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+    
     if intent:
-        return RedirectResponse(f"/campaigns/{intent.campaign_id}?payment={result}", status_code=303)
-    return RedirectResponse("/campaigns/explore", status_code=303)
+        if intent.intent_type == __import__('app').models.financial.PaymentIntentType.TOPUP:
+            return RedirectResponse(f"{frontend_url}/wallet?payment={result}", status_code=303)
+        return RedirectResponse(f"{frontend_url}/campaigns/{intent.campaign_id}?payment={result}", status_code=303)
+    return RedirectResponse(f"{frontend_url}/explore", status_code=303)
 
 # ─── Mon Wallet ──────────────────────────────────────────────────────────────
 from pydantic import BaseModel
