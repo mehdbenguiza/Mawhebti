@@ -141,9 +141,9 @@ async def _process_payment_failed(event: dict, db: Session):
 # ─── Mock Checkout (dev uniquement) ─────────────────────────────────────────
 @router.get('/mock/checkout/{payment_id}')
 async def mock_checkout_page(payment_id: str, amount: float = 0, currency: str = 'TND', campaign: str = ''):
-    \"\"\"Page de paiement simulé — dev uniquement.\"\"\"
+    """Page de paiement simulé — dev uniquement."""
     from fastapi.responses import HTMLResponse
-    html = f\"\"\"
+    html = f"""
     <!DOCTYPE html><html>
     <head><title>Paiement Mock — Mawhebti</title>
     <style>body{{font-family:sans-serif;background:#0a0a0f;color:white;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}}
@@ -167,7 +167,7 @@ async def mock_checkout_page(payment_id: str, amount: float = 0, currency: str =
         <button type="submit" name="result" value="fail" class="fail">❌ Simuler un échec</button>
     </form>
     </div></body></html>
-    \"\"\"
+    """
     return HTMLResponse(html)
 
 @router.post('/mock/confirm')
@@ -175,7 +175,7 @@ async def mock_checkout_confirm(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    \"\"\"Confirme ou échoue un paiement mock — déclenche le webhook en interne.\"\"\"
+    """Confirme ou échoue un paiement mock — déclenche le webhook en interne."""
     from fastapi.responses import RedirectResponse
     form = await request.form()
     payment_id = form.get('payment_id', '')
