@@ -39,11 +39,16 @@ class FraudDecision(str, enum.Enum):
     SUSPICIOUS = "SUSPICIOUS"
     REJECTED = "REJECTED"
 
+class PaymentIntentType(str, enum.Enum):
+    DONATION = "DONATION"
+    TOPUP = "TOPUP"
+
 class PaymentIntent(Base):
     __tablename__ = "payment_intents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    campaign_id = Column(UUID(as_uuid=True), ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False, index=True)
+    intent_type = Column(Enum(PaymentIntentType, native_enum=False, length=50), nullable=False, default=PaymentIntentType.DONATION)
+    campaign_id = Column(UUID(as_uuid=True), ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=True, index=True)
     donor_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     
     provider = Column(String(50), nullable=False) # e.g. STRIPE

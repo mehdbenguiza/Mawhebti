@@ -44,6 +44,21 @@ export const WalletPage: React.FC = () => {
     onError: (e: any) => setWithdrawError(e?.response?.data?.detail || 'Erreur lors du retrait.')
   });
 
+  const [showRecharge, setShowRecharge] = useState(false);
+  const [rechargeAmount, setRechargeAmount] = useState('');
+  const [rechargeProvider, setRechargeProvider] = useState('konnect');
+  const [rechargeError, setRechargeError] = useState('');
+
+  const rechargeMutation = useMutation({
+    mutationFn: (data: { amount: number, provider: string }) => api.post('/payments/wallet/recharge', data),
+    onSuccess: ({ data }) => {
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      }
+    },
+    onError: (e: any) => setRechargeError(e?.response?.data?.detail || 'Erreur lors de la création de la recharge.')
+  });
+
   const txTypeLabel: Record<string, string> = {
     CREDIT: '⬆️ Crédit',
     DEBIT: '⬇️ Débit',
@@ -101,15 +116,23 @@ export const WalletPage: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => setShowWithdraw(true)}
-            disabled={(wallet?.available ?? 0) < 10}
-            className="mt-6 w-full py-3.5 bg-gradient-to-r from-violet-600 to-blue-600 rounded-xl font-black text-white disabled:opacity-40 hover:opacity-90 transition-all shadow-lg shadow-violet-500/20"
-          >
-            💸 Demander un retrait
-          </button>
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={() => setShowRecharge(true)}
+              className="flex-1 py-3.5 bg-white/10 border border-white/20 rounded-xl font-black text-white hover:bg-white/20 transition-all"
+            >
+              ➕ Recharger
+            </button>
+            <button
+              onClick={() => setShowWithdraw(true)}
+              disabled={(wallet?.available ?? 0) < 10}
+              className="flex-1 py-3.5 bg-gradient-to-r from-violet-600 to-blue-600 rounded-xl font-black text-white disabled:opacity-40 hover:opacity-90 transition-all shadow-lg shadow-violet-500/20"
+            >
+              💸 Retrait
+            </button>
+          </div>
           {(wallet?.available ?? 0) < 10 && (
-            <p className="text-[10px] text-gray-600 mt-2">Minimum 10 TND pour effectuer un retrait</p>
+            <p className="text-[10px] text-gray-600 mt-2">Minimum 10 TND pour un retrait</p>
           )}
         </div>
 
@@ -195,6 +218,56 @@ export const WalletPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Modal Recharge */}
+      {showRecharge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#13131a] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-black text-white mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>➕ Recharger mon solde</h3>
+            <p className="text-xs text-gray-400 mb-4">Ajoutez des fonds pour soutenir vos talents préférés.</p>
+
+            <label className="text-xs text-gray-400 font-bold mb-1.5 block">Montant</label>
+            <div className="relative mb-4">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">TND</span>
+              <input
+                type="number" min="1" step="0.5"
+                value={rechargeAmount}
+                onChange={e => { setRechargeAmount(e.target.value); setRechargeError(''); }}
+                placeholder="Montant..."
+                className="w-full pl-14 pr-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-violet-500"
+              />
+            </div>
+
+            <label className="text-xs text-gray-400 font-bold mb-1.5 block">Méthode de paiement</label>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {['mock', 'konnect', 'flouci', 'stripe'].map(prov => (
+                <button
+                  key={prov}
+                  onClick={() => setRechargeProvider(prov)}
+                  className={`py-2 rounded-xl text-xs font-bold transition-colors ${rechargeProvider === prov ? 'bg-violet-600 text-white' : 'bg-white/5 text-gray-400 border border-white/10'}`}
+                >
+                  {prov.charAt(0).toUpperCase() + prov.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {rechargeError && (
+              <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">{rechargeError}</div>
+            )}
+
+            <div className="flex gap-3">
+              <button onClick={() => { setShowRecharge(false); setRechargeError(''); }} className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold hover:bg-white/10">Annuler</button>
+              <button
+                onClick={() => rechargeMutation.mutate({ amount: parseFloat(rechargeAmount), provider: rechargeProvider })}
+                disabled={!rechargeAmount || parseFloat(rechargeAmount) <= 0 || rechargeMutation.isPending}
+                className="flex-1 py-3 bg-gradient-to-r from-violet-600 to-blue-600 rounded-xl text-white text-sm font-black disabled:opacity-50"
+              >
+                {rechargeMutation.isPending ? 'Patientez...' : 'Continuer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

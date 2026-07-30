@@ -22,6 +22,7 @@ from app.services.platform_fee_service import platform_fee_service
 from app.services.receipt_service import receipt_service
 from app.services.refund_service import refund_service
 from app.services.fraud_detection_service import fraud_detection_service
+from app.services.payment_service import payment_service
 from app.models.campaign import Campaign, CampaignStatus
 
 router = APIRouter()
@@ -54,89 +55,10 @@ async def handle_webhook(
         provider_reference, name, event.get('type', ''), event, db
     )
     
-    if event['type'] == 'payment.success':
-        await _process_payment_success(event, db)
-    elif event['type'] == 'payment.failed':
-        await _process_payment_failed(event, db)
+    payment_service.process_webhook(event, db)
     
     db.commit()
     return {'status': 'ok', 'type': event.get('type')}
-
-async def _process_payment_success(event: dict, db: Session):
-    provider_payment_id = event.get('provider_payment_id', '')
-    intent = db.query(PaymentIntent).filter(
-        PaymentIntent.provider_payment_id == provider_payment_id
-    ).first()
-    if not intent:
-        logger.warning(f"[Webhook] PaymentIntent introuvable: {provider_payment_id}")
-        return
-    
-    # Récupérer la donation liée
-    donation = db.query(Donation).filter(
-        Donation.payment_intent_id == intent.id
-    ).first()
-    if not donation:
-        logger.warning(f"[Webhook] Donation introuvable pour intent {intent.id}")
-        return
-    
-    if donation.payment_status == PaymentStatus.SUCCESS:
-        logger.info(f"[Webhook] Donation {donation.id} déjà SUCCESS — ignorée")
-        return
-    
-    # Calcul commission
-    gross = Decimal(str(event.get('amount', float(donation.amount))))
-    fees = platform_fee_service.calculate(gross)
-    net = Decimal(str(fees['net']))
-    fee = Decimal(str(fees['fee']))
-    
-    # Wallet du talent
-    campaign = db.query(Campaign).filter(Campaign.id == donation.campaign_id).first()
-    if not campaign:
-        return
-    
-    talent_wallet = wallet_service.get_or_create_wallet(campaign.creator_id, db)
-    wallet_service.credit(
-        talent_wallet, net,
-        f"DON-{donation.id}",
-        f"Don campagne {campaign.title[:50]} (net après commission 5%)",
-        db
-    )
-    
-    # Ledger
-    ledger_service.record_donation(
-        donation, talent_wallet.id, gross, fee, net,
-        event.get('provider_reference', str(uuid.uuid4())), db
-    )
-    
-    # Mettre à jour donation
-    donation.payment_status = PaymentStatus.SUCCESS
-    donation.net_amount = net
-    donation.platform_fee = fee
-    
-    # Mettre à jour intent
-    intent.status = PaymentIntentStatus.SUCCEEDED
-    
-    # Mettre à jour campagne
-    campaign.current_amount += gross
-    campaign.donors_count = (campaign.donors_count or 0) + 1
-    campaign.last_donation_at = __import__('datetime').datetime.now(__import__('datetime').timezone.utc)
-    
-    # Générer reçu
-    receipt_service.generate(donation, db)
-    
-    logger.info(f"✅ [Webhook] Paiement SUCCESS: {gross} TND → campagne {campaign.title}")
-
-async def _process_payment_failed(event: dict, db: Session):
-    provider_payment_id = event.get('provider_payment_id', '')
-    intent = db.query(PaymentIntent).filter(
-        PaymentIntent.provider_payment_id == provider_payment_id
-    ).first()
-    if intent:
-        intent.status = PaymentIntentStatus.FAILED
-        donation = db.query(Donation).filter(Donation.payment_intent_id == intent.id).first()
-        if donation:
-            donation.payment_status = PaymentStatus.FAILED
-    logger.info(f"❌ [Webhook] Paiement échoué: {provider_payment_id}")
 
 # ─── Mock Checkout (dev uniquement) ─────────────────────────────────────────
 @router.get('/mock/checkout/{payment_id}')
@@ -199,10 +121,7 @@ async def mock_checkout_confirm(
         pass
     else:
         idempotency_service.mark_as_processed(event_id, 'mock', event_type, event, db)
-        if result == 'success':
-            await _process_payment_success(event, db)
-        else:
-            await _process_payment_failed(event, db)
+        payment_service.process_webhook(event, db)
         db.commit()
     
     # Trouver la campagne pour rediriger
@@ -212,6 +131,24 @@ async def mock_checkout_confirm(
     return RedirectResponse("/campaigns/explore", status_code=303)
 
 # ─── Mon Wallet ──────────────────────────────────────────────────────────────
+from pydantic import BaseModel
+
+class RechargeRequest(BaseModel):
+    amount: float
+    provider: str
+
+@router.post('/wallet/recharge')
+def recharge_wallet(
+    request: RechargeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    checkout_url = payment_service.create_checkout_topup(
+        db, current_user.id, Decimal(str(request.amount)), request.provider
+    )
+    db.commit()
+    return {"checkout_url": checkout_url}
+
 @router.get('/wallet')
 def get_my_wallet(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     wallet = wallet_service.get_or_create_wallet(current_user.id, db)
