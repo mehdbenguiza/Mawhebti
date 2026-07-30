@@ -56,7 +56,12 @@ export function CampaignCheckoutPage() {
       });
 
       if (response.data?.checkout_url) {
-        window.location.href = response.data.checkout_url;
+        let url = response.data.checkout_url;
+        if (url.startsWith('/')) {
+          const baseUrl = api.defaults.baseURL || 'http://localhost:8000/api/v1';
+          url = baseUrl.replace('/api/v1', '') + url;
+        }
+        window.location.href = url;
       } else if (response.data?.success) {
         navigate(`/campaigns/${id}?donated=true`);
       } else {

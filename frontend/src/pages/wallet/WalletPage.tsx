@@ -53,7 +53,12 @@ export const WalletPage: React.FC = () => {
     mutationFn: (data: { amount: number, provider: string }) => api.post('/payments/wallet/recharge', data),
     onSuccess: ({ data }) => {
       if (data.checkout_url) {
-        window.location.href = data.checkout_url;
+        let url = data.checkout_url;
+        if (url.startsWith('/')) {
+          const baseUrl = api.defaults.baseURL || 'http://localhost:8000/api/v1';
+          url = baseUrl.replace('/api/v1', '') + url;
+        }
+        window.location.href = url;
       }
     },
     onError: (e: any) => setRechargeError(e?.response?.data?.detail || 'Erreur lors de la création de la recharge.')
